@@ -258,14 +258,14 @@ export async function fetchSoils(point: GeoPoint): Promise<SoilData> {
     const wkt = buildWkt(point);
     const mukeySql = `SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${wkt}')`;
     const mukeyRows = await sdaQuery(mukeySql, 3);
-    
+
     if (!mukeyRows || mukeyRows.length === 0) {
       throw new Error("No map unit found at location");
     }
 
     // Extract mukey from response (comes as array of arrays)
     const mukey = Array.isArray(mukeyRows[0]) ? mukeyRows[0][0] : mukeyRows[0];
-    
+
     if (!mukey) {
       throw new Error("Could not extract mukey from response");
     }
