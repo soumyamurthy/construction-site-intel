@@ -558,3 +558,102 @@ button:hover {
   opacity: 0.7;
   cursor: not-allowed;
 }
+.v2-links-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.v2-links-row a {
+  color: var(--accent);
+  font-size: 0.92rem;
+}
+
+.secondary-button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid rgba(111, 214, 164, 0.35);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 600;
+}
+
+.secondary-button:hover {
+  border-color: rgba(111, 214, 164, 0.65);
+}
+
+.v2-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.v2-metric {
+  background: rgba(111, 214, 164, 0.06);
+  border: 1px solid rgba(111, 214, 164, 0.16);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.v2-metric div {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.v2-metric strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1rem;
+}
+
+.v2-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: rgba(111, 214, 164, 0.12);
+  color: var(--ink);
+  border: 1px solid rgba(111, 214, 164, 0.2);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.tab-button.active {
+  background: rgba(111, 214, 164, 0.26);
+  border-color: rgba(111, 214, 164, 0.6);
+}
+
+.v2-table-wrap {
+  overflow-x: auto;
+}
+
+.v2-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.v2-table th,
+.v2-table td {
+  border-bottom: 1px solid rgba(111, 214, 164, 0.15);
+  padding: 10px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.v2-table th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.v2-list {
+  margin: 8px 0 18px;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}

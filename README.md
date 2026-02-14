@@ -60,6 +60,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
+### Demo Routes
+
+- `/` - Demo hub (choose version)
+- `/v1` - Original signal intelligence experience
+- `/v2` - Estimator + PM workflow (cost drivers, actions, pre-bid brief)
+
 ## Usage
 
 1. Enter a US address in the form
@@ -137,6 +143,25 @@ Analyzes a construction site address.
 }
 ```
 
+### POST `/api/analyze-v2`
+
+Extends the base response with:
+- `costDrivers[]` - Cost/schedule impact ranges by signal
+- `actions[]` - PM action register with owner/phase/priority
+- `contingency` - Recommended contingency range and basis
+- `confidenceScore` and `dataCompletenessPct`
+- `bidAssumptions[]` - Assumptions/allowances/exclusions for bid packaging
+
+## V2 Rule Configuration
+
+V2 logic is editable via `config/v2-rules.json`:
+- `costRules` - Signal-to-cost mapping and impact ranges
+- `actionLibrary` - Owner/phase/lead-time templates
+- `contingencyBands` - Score bands to contingency %
+- `baselineBidAssumptions` and `conditionalBidAssumptions`
+
+Update this file to calibrate V2 output without changing code.
+
 **Response:**
 ```json
 {
@@ -176,14 +201,22 @@ Analyzes a construction site address.
 
 ```
 app/
-├── page.tsx              # Main UI component
-├── api/analyze/route.ts  # Analysis API endpoint
-└── globals.css          # Global styles
+├── page.tsx                 # Demo hub
+├── v1/page.tsx              # V1 UI component
+├── v2/page.tsx              # V2 UI component
+├── api/analyze/route.ts     # V1 analysis API endpoint
+├── api/analyze-v2/route.ts  # V2 analysis API endpoint
+└── globals.css              # Global styles
 
 lib/
-├── sources.ts           # External data fetchers
-├── signals.ts           # Signal builder logic
-└── types.ts             # TypeScript definitions
+├── sources.ts            # External data fetchers
+├── signals.ts            # Signal builder logic
+├── v2.ts                 # V2 rule engine using JSON config
+├── types.ts              # V1 shared types
+└── types-v2.ts           # V2 response types
+
+config/
+└── v2-rules.json         # Editable V2 rules
 ```
 
 ## Signal Categories
