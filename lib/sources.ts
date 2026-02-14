@@ -22,17 +22,58 @@ export type GeocodeResult = {
 };
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
-  const encoded = encodeURIComponent(address);
-  const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`;
-  const data = await fetchJson<any>(url);
-  const match = data?.result?.addressMatches?.[0];
-  if (!match?.coordinates) {
-    throw new Error("No geocode match");
+  const addressVariations = [
+    address, // Original
+    address.replace(/^[A-Z]One\s/, "One "), // Fix "EOne" typo
+    address.split(",").slice(0, -1).join(",").trim(), // Remove ZIP code
+    address.split(",").slice(1).join(",").trim() // City, State, ZIP only
+  ];
+
+  for (const addr of addressVariations) {
+    try {
+      const encoded = encodeURIComponent(addr);
+      const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`;
+      const data = await fetchJson<any>(url, undefined, 8000);
+      const match = data?.result?.addressMatches?.[0];
+      
+      if (match?.coordinates) {
+        return {
+          matchedAddress: match.matchedAddress,
+          location: { lat: match.coordinates.y, lon: match.coordinates.x }
+        };
+      }
+    } catch (err) {
+      // Try next variation
+      continue;
+    }
   }
-  return {
-    matchedAddress: match.matchedAddress,
-    location: { lat: match.coordinates.y, lon: match.coordinates.x }
-  };
+
+  // Last resort: try extracting just city, state
+  try {
+    const parts = address.split(",");
+    if (parts.length >= 2) {
+      const cityState = `${parts[parts.length - 2].trim()}, ${parts[parts.length - 1].trim()}`;
+      const encoded = encodeURIComponent(cityState);
+      const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`;
+      const data = await fetchJson<any>(url, undefined, 8000);
+      const match = data?.result?.addressMatches?.[0];
+      
+      if (match?.coordinates) {
+        return {
+          matchedAddress: match.matchedAddress,
+          location: { lat: match.coordinates.y, lon: match.coordinates.x }
+        };
+      }
+    }
+  } catch (err) {
+    // Last resort failed
+  }
+
+  throw new Error(
+    `Could not geocode address: "${address}". ` +
+    `Try a more general address (e.g., "City, State, ZIP" or "City, State"). ` +
+    `The Census geocoder works best with standard street addresses that are in their database.`
+  );
 }
 
 export type USGSDesignData = {

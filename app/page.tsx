@@ -120,7 +120,21 @@ export default function Home() {
         </div>
       </section>
 
-      {error && <div className="card">Error: {error}</div>}
+      {error && (
+        <div className="card error-card">
+          <div className="section-title">❌ Analysis Failed</div>
+          <p style={{ color: "var(--danger)", lineHeight: "1.6" }}>{error}</p>
+          <div className="notice" style={{ marginTop: "12px", background: "rgba(240, 138, 122, 0.1)", borderColor: "rgba(240, 138, 122, 0.3)" }}>
+            <strong>💡 Tips:</strong>
+            <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
+              <li>Try a simpler address format: "City, State ZIP"</li>
+              <li>Make sure the address is in the US Census database</li>
+              <li>Rural or new addresses may not geocode</li>
+              <li>Example that works: "Davis, CA 95616"</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       {data && (
         <section className="fade-in">
