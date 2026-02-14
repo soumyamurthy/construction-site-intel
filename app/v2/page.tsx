@@ -149,7 +149,6 @@ export default function V2Page() {
         <div>
           <span className="tag">Site Intel V2 - Estimator + PM Workflow</span>
           <h1>Pre-bid cost drivers, contingency guidance, and action ownership.</h1>
-          <p>Use this alongside V1 for demos. V1 runs at `/v1`, and this version runs at `/v2`.</p>
         </div>
         <div className="card fade-in">
           <form className="form" onSubmit={handleSubmit}>
