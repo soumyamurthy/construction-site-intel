@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { AnalysisResult, Signal } from "../lib/types";
 
 const DEFAULT_ADDRESS = "3875 Reservoir Rd, Lima, OH 45801";
@@ -63,6 +63,33 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
+
+  // Load recent addresses from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("recentAddresses");
+    if (stored) {
+      try {
+        setRecentAddresses(JSON.parse(stored));
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+  }, []);
+
+  // Save recent addresses when a successful analysis completes
+  useEffect(() => {
+    if (data && address) {
+      setRecentAddresses((prev) => {
+        // Remove duplicates and add new address to front
+        const filtered = prev.filter((a) => a !== address);
+        const updated = [address, ...filtered].slice(0, 8); // Keep last 8
+        localStorage.setItem("recentAddresses", JSON.stringify(updated));
+        return updated;
+      });
+    }
+  }, [data]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -104,16 +131,40 @@ export default function Home() {
         </div>
         <div className="card fade-in">
           <form className="form" onSubmit={handleSubmit}>
-            <label>
-              US Address
-              <input
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="123 Main St, City, ST 12345"
-              />
-            </label>
-            <button type="submit" disabled={loading}>
-              {loading ? "Analyzing..." : "Run Analysis"}
+            <div className="address-input-wrapper">
+              <label className="address-label">📍 Construction Site Address</label>
+              <div className="input-container">
+                <input
+                  className="address-input"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  onFocus={() => setShowRecent(true)}
+                  onBlur={() => setTimeout(() => setShowRecent(false), 150)}
+                  placeholder="Enter address: 123 Main St, City, ST 12345"
+                  autoComplete="off"
+                />
+                {recentAddresses.length > 0 && showRecent && (
+                  <div className="recent-addresses-dropdown">
+                    {recentAddresses.map((addr) => (
+                      <button
+                        key={addr}
+                        type="button"
+                        className="recent-address-item"
+                        onClick={() => {
+                          setAddress(addr);
+                          setShowRecent(false);
+                        }}
+                      >
+                        <span className="recent-icon">⏱️</span>
+                        <span>{addr}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button type="submit" disabled={loading} className="submit-button">
+              {loading ? "🔄 Analyzing..." : "▶ Run Analysis"}
             </button>
             <div className="notice">All sources used are free and unauthenticated.</div>
           </form>
