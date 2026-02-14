@@ -144,11 +144,12 @@ export default function V2Page() {
   }
 
   return (
-    <main>
+    <main className="v2-page">
       <section className="hero">
         <div>
-          <span className="tag">Site Intel V2 - Estimator + PM Workflow</span>
+          <span className="tag">Site Intel V2</span>
           <h1>Pre-bid cost drivers, contingency guidance, and action ownership.</h1>
+          <p>Includes AI-assisted deductions layered on source data to accelerate early-stage estimating decisions.</p>
         </div>
         <div className="card fade-in">
           <form className="form" onSubmit={handleSubmit}>
