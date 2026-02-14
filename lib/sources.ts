@@ -53,7 +53,12 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
   try {
     const encoded = encodeURIComponent(address);
     const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
-    const data = await fetchJson<any>(url, undefined, 8000);
+    // Nominatim requires a User-Agent header
+    const data = await fetchJson<any>(url, {
+      headers: {
+        'User-Agent': 'construction-site-intel/1.0 (site-intelligence-app)'
+      }
+    }, 8000);
 
     if (data && Array.isArray(data) && data.length > 0) {
       const match = data[0];
