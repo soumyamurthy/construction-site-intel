@@ -75,11 +75,9 @@ main {
 
 .error-card {
   border-color: rgba(240, 138, 122, 0.3) !important;
-  background: linear-gradient(
-    145deg,
-    rgba(240, 138, 122, 0.08) 0%,
-    rgba(20, 30, 28, 0.96) 100%
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(240, 138, 122, 0.08) 0%,
+      rgba(20, 30, 28, 0.96) 100%) !important;
 }
 
 .error-card .section-title {

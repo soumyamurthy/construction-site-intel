@@ -29,13 +29,14 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
     address.split(",").slice(1).join(",").trim() // City, State, ZIP only
   ];
 
+  // Try Census Geocoder first (most accurate for US)
   for (const addr of addressVariations) {
     try {
       const encoded = encodeURIComponent(addr);
       const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`;
       const data = await fetchJson<any>(url, undefined, 8000);
       const match = data?.result?.addressMatches?.[0];
-      
+
       if (match?.coordinates) {
         return {
           matchedAddress: match.matchedAddress,
@@ -48,31 +49,30 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
     }
   }
 
-  // Last resort: try extracting just city, state
+  // Fallback: Try OpenStreetMap Nominatim (free, no API key)
   try {
-    const parts = address.split(",");
-    if (parts.length >= 2) {
-      const cityState = `${parts[parts.length - 2].trim()}, ${parts[parts.length - 1].trim()}`;
-      const encoded = encodeURIComponent(cityState);
-      const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`;
-      const data = await fetchJson<any>(url, undefined, 8000);
-      const match = data?.result?.addressMatches?.[0];
-      
-      if (match?.coordinates) {
-        return {
-          matchedAddress: match.matchedAddress,
-          location: { lat: match.coordinates.y, lon: match.coordinates.x }
-        };
-      }
+    const encoded = encodeURIComponent(address);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+    const data = await fetchJson<any>(url, undefined, 8000);
+
+    if (data && Array.isArray(data) && data.length > 0) {
+      const match = data[0];
+      return {
+        matchedAddress: match.display_name || address,
+        location: {
+          lat: parseFloat(match.lat),
+          lon: parseFloat(match.lon)
+        }
+      };
     }
   } catch (err) {
-    // Last resort failed
+    // Nominatim failed too
   }
 
   throw new Error(
     `Could not geocode address: "${address}". ` +
-    `Try a more general address (e.g., "City, State, ZIP" or "City, State"). ` +
-    `The Census geocoder works best with standard street addresses that are in their database.`
+    `Please try a different address format (e.g., "123 Main St, City, State" or "City, State"). ` +
+    `The geocoder works best with standard US addresses in official databases.`
   );
 }
 
