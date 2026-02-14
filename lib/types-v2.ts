@@ -36,11 +36,27 @@ export type ContingencyRange = {
   basis: string;
 };
 
+export type PercentileTriple = {
+  p10: number;
+  p50: number;
+  p90: number;
+};
+
+export type ProbabilisticEstimate = {
+  baselineCostUsd?: number;
+  impactPct: PercentileTriple;
+  scheduleDays: PercentileTriple;
+  impactCostUsd?: PercentileTriple;
+  methodology: string;
+  sampleSize: number;
+};
+
 export type V2AnalysisResult = AnalysisResult & {
   version: "v2";
   confidenceScore: number;
   dataCompletenessPct: number;
   contingency: ContingencyRange;
+  probabilisticEstimate: ProbabilisticEstimate;
   costDrivers: CostDriver[];
   actions: PMAction[];
   bidAssumptions: BidAssumption[];

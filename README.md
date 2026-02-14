@@ -162,6 +162,16 @@ V2 logic is editable via `config/v2-rules.json`:
 
 Update this file to calibrate V2 output without changing code.
 
+### New Data/Logic Upgrades in V2
+
+- Wind and snow structural exposure proxies using 20-year annualized percentiles (`wind-load-proxy`, `snow-load-proxy`)
+- Wetland/environmental proxy signal from flood/soil indicators
+- Utility capacity/proximity proxy signal
+- Permitting complexity proxy signal
+- Logistics/access proxy signal
+- Probabilistic model (Monte Carlo) with P10/P50/P90 cost and schedule outputs
+- Optional baseline cost input in V2 to convert impact % into USD P10/P50/P90
+
 **Response:**
 ```json
 {

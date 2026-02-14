@@ -5,15 +5,18 @@ import {
   fetchSoils,
   fetchUSGSDesignMap,
   geocodeAddress,
-  fetchFireHazard
+  fetchFireHazard,
+  fetchClimateNormals
 } from "../../../lib/sources";
 import { buildImplications, buildSignals } from "../../../lib/signals";
 import { AnalysisResult, Fact } from "../../../lib/types";
 import { V2AnalysisResult } from "../../../lib/types-v2";
 import {
+  buildAdvancedSignals,
   buildBidAssumptions,
   buildContingency,
   buildCostDrivers,
+  buildProbabilisticEstimate,
   buildPMActions,
   scoreConfidence
 } from "../../../lib/v2";
@@ -29,6 +32,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const address = body?.address?.trim();
+    const baselineCostUsd =
+      typeof body?.baselineCostUsd === "number" && Number.isFinite(body.baselineCostUsd) && body.baselineCostUsd > 0
+        ? body.baselineCostUsd
+        : undefined;
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
     }
@@ -53,7 +60,7 @@ export async function POST(req: NextRequest) {
       value: geocode.location.lon
     });
 
-    const [usgs, fema, soils, elevation, fire] = await Promise.all([
+    const [usgs, fema, soils, elevation, fire, climate] = await Promise.all([
       fetchUSGSDesignMap(geocode.location).catch((err) => {
         warnings.push(`USGS design maps unavailable: ${err.message}`);
         return undefined;
@@ -72,6 +79,10 @@ export async function POST(req: NextRequest) {
       }),
       fetchFireHazard(geocode.location).catch((err) => {
         warnings.push(`Fire hazard data unavailable: ${err.message}`);
+        return undefined;
+      }),
+      fetchClimateNormals(geocode.location).catch((err) => {
+        warnings.push(`Climate normals unavailable: ${err.message}`);
         return undefined;
       })
     ]);
@@ -141,7 +152,35 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const signals = buildSignals({ fema, usgs, soils, elevation, fire });
+    if (climate) {
+      addFact(facts, {
+        source: climate.source ?? "Open-Meteo archive",
+        label: "Wind Design Proxy (P90 annual max)",
+        value: climate.designWindMph ?? null,
+        unit: "mph"
+      });
+      addFact(facts, {
+        source: climate.source ?? "Open-Meteo archive",
+        label: "Annual Snow Proxy (P90)",
+        value: climate.p90AnnualSnowCm ?? climate.annualSnowCm ?? null,
+        unit: "cm"
+      });
+      addFact(facts, {
+        source: climate.source ?? "Open-Meteo archive",
+        label: "Climate Analysis Years",
+        value: climate.analysisYears ?? null
+      });
+    }
+
+    const baseSignals = buildSignals({ fema, usgs, soils, elevation, fire });
+    const advancedSignals = buildAdvancedSignals({
+      point: geocode.location,
+      fema,
+      soils,
+      elevation,
+      climate
+    });
+    const signals = [...baseSignals, ...advancedSignals];
     const implications = buildImplications(signals);
 
     const baseResult: AnalysisResult = {
@@ -157,6 +196,11 @@ export async function POST(req: NextRequest) {
     const actions = buildPMActions(signals);
     const contingency = buildContingency(signals);
     const bidAssumptions = buildBidAssumptions(signals);
+    const probabilisticEstimate = buildProbabilisticEstimate({
+      costDrivers,
+      baselineCostUsd,
+      seedKey: address
+    });
     const { confidenceScore, dataCompletenessPct } = scoreConfidence(signals, warnings);
 
     const result: V2AnalysisResult = {
@@ -165,6 +209,7 @@ export async function POST(req: NextRequest) {
       confidenceScore,
       dataCompletenessPct,
       contingency,
+      probabilisticEstimate,
       costDrivers,
       actions,
       bidAssumptions

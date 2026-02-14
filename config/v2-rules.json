@@ -65,6 +65,72 @@
         "low": { "pct": [0, 0.3], "days": [0, 1] }
       },
       "rationale": "Fire-prone areas can add premium for materials, defensible space, and insurance."
+    },
+    {
+      "signalId": "wind-load-proxy",
+      "costCategory": "Division 05/07 - Lateral + Envelope",
+      "impactType": "capex",
+      "deltas": {
+        "high": { "pct": [1.2, 4], "days": [3, 12] },
+        "medium": { "pct": [0.4, 1.2], "days": [1, 4] },
+        "low": { "pct": [0, 0.4], "days": [0, 1] }
+      },
+      "rationale": "Higher wind demand can increase lateral detailing and cladding anchorage scope."
+    },
+    {
+      "signalId": "snow-load-proxy",
+      "costCategory": "Division 05/07 - Roof + Drift Controls",
+      "impactType": "capex",
+      "deltas": {
+        "high": { "pct": [1, 3.5], "days": [2, 10] },
+        "medium": { "pct": [0.3, 1], "days": [1, 3] },
+        "low": { "pct": [0, 0.3], "days": [0, 1] }
+      },
+      "rationale": "Snow exposure can increase roof framing demand and snow management provisions."
+    },
+    {
+      "signalId": "wetland-constraint-proxy",
+      "costCategory": "Environmental + Civil",
+      "impactType": "schedule",
+      "deltas": {
+        "high": { "pct": [1, 4], "days": [10, 35] },
+        "medium": { "pct": [0.4, 1], "days": [3, 10] },
+        "low": { "pct": [0, 0.4], "days": [0, 2] }
+      },
+      "rationale": "Environmental constraints often add studies, mitigation, and permitting duration."
+    },
+    {
+      "signalId": "utility-capacity-proxy",
+      "costCategory": "Utilities + Offsite",
+      "impactType": "capex",
+      "deltas": {
+        "high": { "pct": [1.5, 6], "days": [7, 30] },
+        "medium": { "pct": [0.5, 1.5], "days": [2, 7] },
+        "low": { "pct": [0, 0.5], "days": [0, 2] }
+      },
+      "rationale": "Utility extension and capacity upgrades can add both direct cost and lead time."
+    },
+    {
+      "signalId": "permitting-complexity-proxy",
+      "costCategory": "General Conditions",
+      "impactType": "schedule",
+      "deltas": {
+        "high": { "pct": [0.8, 2.5], "days": [8, 25] },
+        "medium": { "pct": [0.3, 0.8], "days": [3, 8] },
+        "low": { "pct": [0, 0.3], "days": [0, 2] }
+      },
+      "rationale": "Complex jurisdictional review pathways can increase preconstruction and carrying costs."
+    },
+    {
+      "signalId": "logistics-access-proxy",
+      "costCategory": "Site Logistics + Temporary Works",
+      "impactType": "general_conditions",
+      "deltas": {
+        "high": { "pct": [1, 3.5], "days": [6, 20] },
+        "medium": { "pct": [0.4, 1], "days": [2, 6] },
+        "low": { "pct": [0, 0.4], "days": [0, 2] }
+      },
+      "rationale": "Constrained access can drive haul inefficiency, temporary works, and staging costs."
     }
   ],
   "actionLibrary": {
@@ -103,6 +169,42 @@
       "owner": "Project Manager",
       "duePhase": "Permit",
       "leadTimeDays": 11
+    },
+    "wind-load-proxy": {
+      "title": "Validate wind criteria against structural basis of design",
+      "owner": "Structural Engineer",
+      "duePhase": "Design Development",
+      "leadTimeDays": 6
+    },
+    "snow-load-proxy": {
+      "title": "Review roof snow strategy and drainage assumptions",
+      "owner": "Structural Engineer",
+      "duePhase": "Design Development",
+      "leadTimeDays": 6
+    },
+    "wetland-constraint-proxy": {
+      "title": "Screen environmental constraints and permitting triggers",
+      "owner": "Civil Engineer",
+      "duePhase": "Bid",
+      "leadTimeDays": 12
+    },
+    "utility-capacity-proxy": {
+      "title": "Engage utility providers for capacity and extension feasibility",
+      "owner": "Project Manager",
+      "duePhase": "Bid",
+      "leadTimeDays": 14
+    },
+    "permitting-complexity-proxy": {
+      "title": "Map AHJ review path and long-lead approval milestones",
+      "owner": "Project Manager",
+      "duePhase": "Bid",
+      "leadTimeDays": 10
+    },
+    "logistics-access-proxy": {
+      "title": "Develop preliminary logistics and staging plan",
+      "owner": "Estimator",
+      "duePhase": "Bid",
+      "leadTimeDays": 8
     }
   },
   "contingencyBands": [

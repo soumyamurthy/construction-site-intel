@@ -168,6 +168,15 @@ export type FireHazardData = {
   fireOccurrenceHistoryYears?: number;
 };
 
+export type ClimateData = {
+  designWindMph?: number | null;
+  annualSnowCm?: number | null;
+  p90AnnualSnowCm?: number | null;
+  p50AnnualSnowCm?: number | null;
+  analysisYears?: number | null;
+  source?: string;
+};
+
 function buildWkt(point: GeoPoint, delta = 0.00025): string {
   const minLat = point.lat - delta;
   const maxLat = point.lat + delta;
@@ -446,6 +455,90 @@ export async function fetchFireHazard(point: GeoPoint): Promise<FireHazardData> 
       wildfireRisk: "low",
       fireZoneCategory: undefined,
       fireOccurrenceHistoryYears: undefined
+    };
+  }
+}
+
+export async function fetchClimateNormals(point: GeoPoint): Promise<ClimateData> {
+  try {
+    const now = new Date();
+    const endYear = now.getUTCFullYear() - 1;
+    const startYear = endYear - 19;
+    const startDate = `${startYear}-01-01`;
+    const endDate = `${endYear}-12-31`;
+
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${point.lat}&longitude=${point.lon}&start_date=${startDate}&end_date=${endDate}&daily=wind_speed_10m_max,snowfall_sum&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC`;
+    const data = await fetchJson<any>(url, undefined, 10000);
+
+    const windSeries = Array.isArray(data?.daily?.wind_speed_10m_max)
+      ? data.daily.wind_speed_10m_max
+      : [];
+
+    const snowSeries = Array.isArray(data?.daily?.snowfall_sum)
+      ? data.daily.snowfall_sum
+      : [];
+
+    const dates = Array.isArray(data?.daily?.time) ? data.daily.time : [];
+
+    const yearlyWindMax = new Map<number, number>();
+    const yearlySnowSum = new Map<number, number>();
+
+    const n = Math.min(dates.length, windSeries.length, snowSeries.length);
+    for (let i = 0; i < n; i++) {
+      const year = Number(String(dates[i]).slice(0, 4));
+      if (!Number.isFinite(year)) continue;
+
+      const wind = typeof windSeries[i] === "number" ? windSeries[i] : null;
+      const snow = typeof snowSeries[i] === "number" ? snowSeries[i] : null;
+
+      const existingWind = yearlyWindMax.get(year);
+      if (typeof wind === "number" && (existingWind == null || wind > existingWind)) {
+        yearlyWindMax.set(year, wind);
+      }
+
+      if (typeof snow === "number") {
+        yearlySnowSum.set(year, (yearlySnowSum.get(year) ?? 0) + snow);
+      }
+    }
+
+    const annualWindMaxValues = Array.from(yearlyWindMax.values()).sort((a, b) => a - b);
+    const annualSnowCmValues = Array.from(yearlySnowSum.values())
+      .map((inches) => inches * 2.54)
+      .sort((a, b) => a - b);
+
+    const pIndex = (arr: number[], p: number) => {
+      if (!arr.length) return -1;
+      return Math.min(arr.length - 1, Math.max(0, Math.floor(arr.length * p)));
+    };
+
+    const windP90Idx = pIndex(annualWindMaxValues, 0.9);
+    const designWindMph = windP90Idx >= 0 ? annualWindMaxValues[windP90Idx] : null;
+
+    const snowP90Idx = pIndex(annualSnowCmValues, 0.9);
+    const snowP50Idx = pIndex(annualSnowCmValues, 0.5);
+    const p90AnnualSnowCm = snowP90Idx >= 0 ? annualSnowCmValues[snowP90Idx] : null;
+    const p50AnnualSnowCm = snowP50Idx >= 0 ? annualSnowCmValues[snowP50Idx] : null;
+    const annualSnowCm =
+      annualSnowCmValues.length > 0
+        ? annualSnowCmValues.reduce((sum, value) => sum + value, 0) / annualSnowCmValues.length
+        : null;
+
+    return {
+      designWindMph,
+      annualSnowCm,
+      p90AnnualSnowCm,
+      p50AnnualSnowCm,
+      analysisYears: annualSnowCmValues.length || annualWindMaxValues.length || null,
+      source: `Open-Meteo archive ${startYear}-${endYear} (annualized)`
+    };
+  } catch {
+    return {
+      designWindMph: null,
+      annualSnowCm: null,
+      p90AnnualSnowCm: null,
+      p50AnnualSnowCm: null,
+      analysisYears: null,
+      source: undefined
     };
   }
 }

@@ -33,6 +33,17 @@ function toCsv(data: V2AnalysisResult): string {
   rows.push(`Summary,Data Completeness %,${data.dataCompletenessPct}`);
   rows.push(`Summary,Contingency Min %,${data.contingency.minPct}`);
   rows.push(`Summary,Contingency Max %,${data.contingency.maxPct}`);
+  rows.push(`Summary,P10 Cost Impact %,${data.probabilisticEstimate.impactPct.p10}`);
+  rows.push(`Summary,P50 Cost Impact %,${data.probabilisticEstimate.impactPct.p50}`);
+  rows.push(`Summary,P90 Cost Impact %,${data.probabilisticEstimate.impactPct.p90}`);
+  rows.push(`Summary,P10 Schedule Days,${data.probabilisticEstimate.scheduleDays.p10}`);
+  rows.push(`Summary,P50 Schedule Days,${data.probabilisticEstimate.scheduleDays.p50}`);
+  rows.push(`Summary,P90 Schedule Days,${data.probabilisticEstimate.scheduleDays.p90}`);
+  if (data.probabilisticEstimate.impactCostUsd) {
+    rows.push(`Summary,P10 Cost Impact USD,${data.probabilisticEstimate.impactCostUsd.p10}`);
+    rows.push(`Summary,P50 Cost Impact USD,${data.probabilisticEstimate.impactCostUsd.p50}`);
+    rows.push(`Summary,P90 Cost Impact USD,${data.probabilisticEstimate.impactCostUsd.p90}`);
+  }
 
   for (const d of data.costDrivers) {
     rows.push(`Cost Driver,Label,${escapeCsv(d.label)}`);
@@ -55,6 +66,7 @@ function toCsv(data: V2AnalysisResult): string {
 
 export default function V2Page() {
   const [address, setAddress] = useState(DEFAULT_ADDRESS);
+  const [baselineCostUsd, setBaselineCostUsd] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>("signals");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +83,10 @@ export default function V2Page() {
       const res = await fetch("/api/analyze-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address })
+        body: JSON.stringify({
+          address,
+          baselineCostUsd: baselineCostUsd ? Number(baselineCostUsd) : undefined
+        })
       });
       const payload = await res.json();
       if (!res.ok) {
@@ -102,6 +117,15 @@ export default function V2Page() {
               value={address}
               onChange={(event) => setAddress(event.target.value)}
               placeholder="123 Main St, City, ST 12345"
+            />
+            <input
+              className="address-input"
+              type="number"
+              min={0}
+              step="1000"
+              value={baselineCostUsd}
+              onChange={(event) => setBaselineCostUsd(event.target.value)}
+              placeholder="Optional baseline project cost (USD)"
             />
             <button type="submit" className="submit-button" disabled={loading}>
               {loading ? "Analyzing..." : "Run V2 Analysis"}
@@ -159,6 +183,19 @@ export default function V2Page() {
               <div className="v2-metric">
                 <div>Contingency Basis</div>
                 <strong>{data.contingency.basis}</strong>
+              </div>
+              <div className="v2-metric">
+                <div>P50 Cost Impact</div>
+                <strong>
+                  +{data.probabilisticEstimate.impactPct.p50}%
+                  {data.probabilisticEstimate.impactCostUsd
+                    ? ` ($${Math.round(data.probabilisticEstimate.impactCostUsd.p50).toLocaleString()})`
+                    : ""}
+                </strong>
+              </div>
+              <div className="v2-metric">
+                <div>P90 Schedule Impact</div>
+                <strong>{data.probabilisticEstimate.scheduleDays.p90} days</strong>
               </div>
             </div>
           </div>
@@ -269,6 +306,22 @@ export default function V2Page() {
                 {data.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
+              </ul>
+
+              <h3>Probabilistic Range (P10 / P50 / P90)</h3>
+              <ul className="v2-list">
+                <li>
+                  Cost Impact %: {data.probabilisticEstimate.impactPct.p10}% / {data.probabilisticEstimate.impactPct.p50}% / {data.probabilisticEstimate.impactPct.p90}%
+                </li>
+                <li>
+                  Schedule Days: {data.probabilisticEstimate.scheduleDays.p10} / {data.probabilisticEstimate.scheduleDays.p50} / {data.probabilisticEstimate.scheduleDays.p90}
+                </li>
+                {data.probabilisticEstimate.impactCostUsd && (
+                  <li>
+                    Cost Impact USD: ${Math.round(data.probabilisticEstimate.impactCostUsd.p10).toLocaleString()} / ${Math.round(data.probabilisticEstimate.impactCostUsd.p50).toLocaleString()} / ${Math.round(data.probabilisticEstimate.impactCostUsd.p90).toLocaleString()}
+                  </li>
+                )}
+                <li>{data.probabilisticEstimate.methodology}</li>
               </ul>
             </div>
           )}
