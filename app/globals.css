@@ -686,3 +686,81 @@ button:hover {
   color: var(--muted);
   line-height: 1.5;
 }
+
+.v2-page {
+  background: linear-gradient(180deg, #f8fcfb 0%, #eef5f3 100%);
+  color: #1d2a28;
+  border-radius: 20px;
+}
+
+.v2-page .tag {
+  color: #172421;
+}
+
+.v2-page .hero h1 {
+  color: #2d3c39;
+}
+
+.v2-page .hero p,
+.v2-page .notice,
+.v2-page .v2-metric div,
+.v2-page .signal-explanation,
+.v2-page .v2-group-header p,
+.v2-page .v2-list {
+  color: #5b6d69;
+}
+
+.v2-page .card {
+  background: #ffffff;
+  border: 1px solid rgba(16, 41, 33, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 40, 32, 0.08);
+}
+
+.v2-page .section-title,
+.v2-page .signal-name,
+.v2-page .v2-group-header h3,
+.v2-page .implication-card h4,
+.v2-page .v2-metric strong,
+.v2-page .v2-table td {
+  color: #1c2b28;
+}
+
+.v2-page .address-input {
+  background: #ffffff !important;
+  color: #1d2a28 !important;
+  border: 1px solid rgba(16, 41, 33, 0.15) !important;
+}
+
+.v2-page .address-input::placeholder {
+  color: #8ea09b;
+}
+
+.v2-page .tab-button {
+  background: #f3f8f7;
+  color: #2b3c38;
+  border-color: rgba(16, 41, 33, 0.12);
+}
+
+.v2-page .tab-button.active {
+  background: rgba(111, 214, 164, 0.25);
+  color: #1f322d;
+}
+
+.v2-page .signal-item {
+  background: #fbfdfc;
+  border: 1px solid rgba(16, 41, 33, 0.08);
+}
+
+.v2-page .v2-signal-group {
+  background: #f8fcfb;
+  border: 1px solid rgba(16, 41, 33, 0.08);
+}
+
+.v2-page .v2-table th {
+  color: #60716d;
+}
+
+.v2-page .v2-table th,
+.v2-page .v2-table td {
+  border-bottom: 1px solid rgba(16, 41, 33, 0.1);
+}
