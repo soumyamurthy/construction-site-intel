@@ -1,11 +1,49 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { Signal } from "../../lib/types";
 import type { V2AnalysisResult } from "../../lib/types-v2";
 
 const DEFAULT_ADDRESS = "300 E Lincoln Way, Ames, IA 50010";
 
 type TabId = "signals" | "cost" | "actions" | "report";
+
+type SignalGroup = {
+  key: string;
+  title: string;
+  subtitle: string;
+  ids: string[];
+};
+
+const IMPORTANT_SIGNAL_GROUPS: SignalGroup[] = [
+  {
+    key: "regulatory",
+    title: "Regulatory and Environmental",
+    subtitle: "Permitting, flood, fire, and environmental exposure",
+    ids: ["flood-zone", "wetland-constraint-proxy", "wildfire-risk", "permitting-complexity-proxy"]
+  },
+  {
+    key: "structural",
+    title: "Structural and Climate Loads",
+    subtitle: "Code-driven structural loading and lateral demands",
+    ids: ["sdc", "sds", "sd1", "wind-load-proxy", "snow-load-proxy"]
+  },
+  {
+    key: "ground",
+    title: "Ground and Site Conditions",
+    subtitle: "Subgrade quality, slope, and constructability drivers",
+    ids: ["soil-drainage", "clay", "site-slope", "utility-capacity-proxy", "logistics-access-proxy"]
+  }
+];
+
+function groupImportantSignals(signals: Signal[]): Array<SignalGroup & { signals: Signal[] }> {
+  return IMPORTANT_SIGNAL_GROUPS.map((group) => ({
+    ...group,
+    signals: group.ids
+      .map((id) => signals.find((signal) => signal.id === id))
+      .filter((signal): signal is Signal => Boolean(signal))
+  })).filter((group) => group.signals.length > 0);
+}
 
 function downloadFile(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -73,6 +111,10 @@ export default function V2Page() {
   const [data, setData] = useState<V2AnalysisResult | null>(null);
 
   const topDrivers = useMemo(() => data?.costDrivers.slice(0, 5) ?? [], [data]);
+  const groupedImportantSignals = useMemo(
+    () => (data ? groupImportantSignals(data.signals) : []),
+    [data]
+  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -218,17 +260,27 @@ export default function V2Page() {
 
           {activeTab === "signals" && (
             <div className="card">
-              <div className="section-title">Risk Signals</div>
-              <div className="signals-list">
-                {data.signals.map((signal) => (
-                  <div key={signal.id} className={`signal-item severity-${signal.severity}`}>
-                    <div className="signal-header">
-                      <span className="signal-name">{signal.label}</span>
-                      <span className={`severity-badge severity-${signal.severity}`}>{signal.severity}</span>
+              <div className="section-title">Critical Signals</div>
+              <div className="v2-signal-groups">
+                {groupedImportantSignals.map((group) => (
+                  <section key={group.key} className="v2-signal-group">
+                    <header className="v2-group-header">
+                      <h3>{group.title}</h3>
+                      <p>{group.subtitle}</p>
+                    </header>
+                    <div className="signals-list">
+                      {group.signals.map((signal) => (
+                        <div key={signal.id} className={`signal-item severity-${signal.severity}`}>
+                          <div className="signal-header">
+                            <span className="signal-name">{signal.label}</span>
+                            <span className={`severity-badge severity-${signal.severity}`}>{signal.severity}</span>
+                          </div>
+                          <div className="signal-value">{signal.value}</div>
+                          <p className="signal-explanation">{signal.explanation}</p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="signal-value">{signal.value}</div>
-                    <p className="signal-explanation">{signal.explanation}</p>
-                  </div>
+                  </section>
                 ))}
               </div>
             </div>
