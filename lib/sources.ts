@@ -181,7 +181,8 @@ async function sdaQuery(sql: string, maxRetries = 3): Promise<any[]> {
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const body = new URLSearchParams({ query: sql }).toString();
+      // CRITICAL: Include format=JSON to get JSON response instead of XML
+      const body = new URLSearchParams({ query: sql, format: "JSON" }).toString();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -221,12 +222,12 @@ async function fetchNRCSSoilData(point: GeoPoint): Promise<SoilData> {
     const wkt = buildWkt(point, 0.0005); // Slightly larger buffer for fallback
 
     // Try to get component data directly
-    const sql = `SELECT TOP 1 compname, hydgrpdcd, drclassdcd, resdept_r 
+    const sql = `SELECT TOP 1 compname, hydgrp, drainagecl 
       FROM component 
       WHERE mukey IN (SELECT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${wkt}'))
       ORDER BY comppct_r DESC`;
 
-    const body = new URLSearchParams({ query: sql }).toString();
+    const body = new URLSearchParams({ query: sql, format: "JSON" }).toString();
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -240,11 +241,11 @@ async function fetchNRCSSoilData(point: GeoPoint): Promise<SoilData> {
     const row = data?.Table?.[0];
 
     return {
-      compname: row?.compname,
-      hydrologicGroup: row?.hydgrpdcd,
-      drainageClass: row?.drclassdcd,
-      restrictiveDepthCm: row?.resdept_r ?? null,
-      clayPercent: null // NRCS endpoint doesn't provide clay in component table
+      compname: Array.isArray(row) ? row[0] : row?.compname,
+      hydrologicGroup: Array.isArray(row) ? row[1] : row?.hydgrp,
+      drainageClass: Array.isArray(row) ? row[2] : row?.drainagecl,
+      restrictiveDepthCm: null,
+      clayPercent: null
     };
   } catch (err) {
     throw new Error(`NRCS fallback failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -253,35 +254,55 @@ async function fetchNRCSSoilData(point: GeoPoint): Promise<SoilData> {
 
 export async function fetchSoils(point: GeoPoint): Promise<SoilData> {
   try {
-    // Primary: Try USDA SDA with retries
+    // Step 1: Get mukey from location
     const wkt = buildWkt(point);
     const mukeySql = `SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${wkt}')`;
+    const mukeyRows = await sdaQuery(mukeySql, 3);
+    
+    if (!mukeyRows || mukeyRows.length === 0) {
+      throw new Error("No map unit found at location");
+    }
 
-    const compSql = `SELECT TOP 1 compname, comppct_r, hydgrpdcd, drclassdcd, resdept_r
-      FROM component
-      WHERE mukey IN (${mukeySql})
-      ORDER BY comppct_r DESC`;
+    // Extract mukey from response (comes as array of arrays)
+    const mukey = Array.isArray(mukeyRows[0]) ? mukeyRows[0][0] : mukeyRows[0];
+    
+    if (!mukey) {
+      throw new Error("Could not extract mukey from response");
+    }
 
-    const horizonSql = `SELECT TOP 1 ch.hzdept_r, ch.hzdepb_r, ch.claytotal_r
-      FROM chorizon ch
-      INNER JOIN component c ON c.cokey = ch.cokey
-      WHERE c.mukey IN (${mukeySql})
-      ORDER BY ch.hzdept_r ASC`;
+    // Step 2: Get component data (comppct_r, hydgrp, drainagecl)
+    const compSql = `SELECT TOP 1 compname, comppct_r, hydgrp, drainagecl FROM component WHERE mukey = '${mukey}' ORDER BY comppct_r DESC`;
+    const compRows = await sdaQuery(compSql, 3);
 
-    const [compRows, hzRows] = await Promise.all([
-      sdaQuery(compSql, 3),
-      sdaQuery(horizonSql, 2)
-    ]);
+    // Step 3: Get horizon data for clay content
+    const horizonSql = `SELECT TOP 1 claytotal_r FROM chorizon ch INNER JOIN component c ON c.cokey = ch.cokey WHERE c.mukey = '${mukey}' ORDER BY ch.hzdept_r ASC`;
+    const horizonRows = await sdaQuery(horizonSql, 2);
 
-    const comp = compRows?.[0] ?? {};
-    const hz = hzRows?.[0] ?? {};
+    // Parse component data (comes as array of [compname, comppct_r, hydgrp, drainagecl])
+    let compData: any = {};
+    if (compRows && compRows.length > 0) {
+      const row = compRows[0];
+      compData = {
+        compname: Array.isArray(row) ? row[0] : row?.compname,
+        comppct_r: Array.isArray(row) ? row[1] : row?.comppct_r,
+        hydgrp: Array.isArray(row) ? row[2] : row?.hydgrp,
+        drainagecl: Array.isArray(row) ? row[3] : row?.drainagecl
+      };
+    }
+
+    // Parse horizon data for clay
+    let clayPercent: number | null = null;
+    if (horizonRows && horizonRows.length > 0) {
+      const clayValue = Array.isArray(horizonRows[0]) ? horizonRows[0][0] : horizonRows[0]?.claytotal_r;
+      clayPercent = clayValue ? Number(clayValue) : null;
+    }
 
     return {
-      compname: comp?.compname,
-      hydrologicGroup: comp?.hydgrpdcd,
-      drainageClass: comp?.drclassdcd,
-      restrictiveDepthCm: comp?.resdept_r ?? null,
-      clayPercent: hz?.claytotal_r ?? null
+      compname: compData.compname,
+      hydrologicGroup: compData.hydgrp,
+      drainageClass: compData.drainagecl,
+      restrictiveDepthCm: null, // Not available from basic queries
+      clayPercent
     };
   } catch (primaryError) {
     // Fallback: Try NRCS Web Soil Survey
