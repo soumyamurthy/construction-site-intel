@@ -305,152 +305,40 @@ button:hover {
   line-height: 1.4;
 }
 
-.v2-site-summary {
-  margin-bottom: 18px;
-}
-
-.v2-top-stage {
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.9fr) minmax(280px, 0.8fr);
-  gap: 18px;
-  align-items: stretch;
-  min-height: min(26vh, 260px);
-}
-
 .v2-hero {
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 34px;
   align-items: stretch;
-}
-
-.v2-top-panel {
-  min-width: 0;
 }
 
 .v2-hero-copy {
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
-  padding: 24px 28px;
-  border-radius: 24px;
-  overflow: hidden;
-  background:
-    radial-gradient(360px 220px at 0% 0%, rgba(111, 214, 164, 0.14), transparent 60%),
-    linear-gradient(145deg, rgba(24, 36, 33, 0.92), rgba(14, 21, 19, 0.85));
-  border: 1px solid rgba(111, 214, 164, 0.12);
-  box-shadow: var(--shadow);
-}
-
-.v2-title-panel::after {
-  content: "";
-  position: absolute;
-  inset: auto -8% -28% auto;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(241, 200, 106, 0.14), transparent 68%);
-  pointer-events: none;
+  min-width: 0;
 }
 
 .v2-hero-card {
-  padding: 22px;
-  border-radius: 24px;
+  padding: 28px;
 }
 
 .v2-hero-form {
-  gap: 12px;
+  gap: 16px;
 }
 
 .v2-address-label {
-  font-size: 0.96rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-size: 1rem;
+  letter-spacing: 0.01em;
 }
 
 .v2-hero-input {
-  min-height: 54px;
-  font-size: 1rem !important;
+  min-height: 62px;
+  font-size: 1.06rem !important;
 }
 
 .v2-hero-button {
-  min-height: 52px;
-  font-size: 1rem !important;
-}
-
-.v2-site-header {
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  padding: 22px;
-  border-radius: 22px;
-  border: 1px solid rgba(111, 214, 164, 0.16);
-  background:
-    radial-gradient(420px 220px at 100% 0%, rgba(111, 214, 164, 0.12), transparent 60%),
-    linear-gradient(145deg, rgba(20, 30, 28, 0.96), rgba(16, 24, 22, 0.92));
-  box-shadow: var(--shadow);
-}
-
-.v2-site-header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(111, 214, 164, 0.08), transparent 28%);
-  pointer-events: none;
-}
-
-.v2-site-kicker {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(111, 214, 164, 0.1);
-  border: 1px solid rgba(111, 214, 164, 0.18);
-  color: var(--accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.v2-site-title {
-  position: relative;
-  z-index: 1;
-  margin-top: 12px;
-  margin-bottom: 14px;
-  font-size: clamp(1.1rem, 1.6vw, 1.45rem);
-}
-
-.v2-site-address-card {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 6px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(15, 23, 21, 0.78), rgba(15, 23, 21, 0.58));
-  backdrop-filter: blur(10px);
-}
-
-.v2-site-address {
-  font-size: clamp(1rem, 1.2vw, 1.08rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.v2-site-coordinates {
-  color: var(--muted);
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
+  min-height: 58px;
+  font-size: 1.08rem !important;
 }
 
 .v2-signals-scroll {
@@ -897,13 +785,11 @@ button:hover {
 }
 
 .v2-page .hero h1 {
-  color: var(--ink);
-  font-weight: 700;
-  font-size: clamp(2rem, 3.8vw, 3.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-  max-width: 11ch;
-  margin: 0;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 48ch;
 }
 
 .v2-page .hero p,
@@ -916,9 +802,8 @@ button:hover {
 }
 
 .v2-page .hero p {
-  max-width: 44ch;
-  font-size: 1rem;
-  line-height: 1.55;
+  max-width: 60ch;
+  font-size: 1.08rem;
 }
 
 .v2-page .card {
@@ -1015,28 +900,12 @@ button:hover {
     gap: 22px;
   }
 
-  .v2-top-stage {
-    min-height: auto;
-  }
-
   .v2-page .hero h1 {
     max-width: none;
     font-size: clamp(1.8rem, 8vw, 2.7rem);
-    line-height: 1.02;
   }
 
   .v2-hero-card {
     padding: 22px;
-  }
-
-  .v2-site-header {
-    padding: 20px;
-  }
-
-  .v2-site-address {
-    font-size: 0.98rem;
-    -webkit-line-clamp: unset;
-    line-clamp: unset;
-    display: block;
   }
 }
