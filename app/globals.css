@@ -852,15 +852,15 @@ button:hover {
 }
 
 .v2-page .tag {
-  color: var(--ink);
+  color: var(--accent);
 }
 
 .v2-page .hero h1 {
-  color: var(--ink);
+  color: var(--muted);
   font-weight: 500;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 1.02;
-  max-width: 12ch;
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 48ch;
 }
 
 .v2-page .hero p,
