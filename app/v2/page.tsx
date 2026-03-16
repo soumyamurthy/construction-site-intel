@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Signal } from "../../lib/types";
 import type { V2AnalysisResult } from "../../lib/types-v2";
 
@@ -115,6 +115,13 @@ export default function V2Page() {
     () => (data ? groupImportantSignals(data.signals) : []),
     [data]
   );
+
+  useEffect(() => {
+    document.body.classList.add("v2-body");
+    return () => {
+      document.body.classList.remove("v2-body");
+    };
+  }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();

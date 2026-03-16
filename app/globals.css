@@ -687,18 +687,25 @@ button:hover {
   line-height: 1.5;
 }
 
+.v2-body {
+  background: radial-gradient(1200px 800px at 10% -20%, #1f2b27 0%, #0c1110 60%),
+    linear-gradient(120deg, #0c1110 0%, #0d1412 55%, #111916 100%);
+  color: var(--ink);
+}
+
 .v2-page {
-  background: linear-gradient(180deg, #f8fcfb 0%, #eef5f3 100%);
-  color: #1d2a28;
-  border-radius: 20px;
+  background: transparent;
+  color: var(--ink);
+  min-height: 100vh;
 }
 
 .v2-page .tag {
-  color: #172421;
+  color: var(--ink);
 }
 
 .v2-page .hero h1 {
-  color: #2d3c39;
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .v2-page .hero p,
@@ -707,13 +714,13 @@ button:hover {
 .v2-page .signal-explanation,
 .v2-page .v2-group-header p,
 .v2-page .v2-list {
-  color: #5b6d69;
+  color: var(--muted);
 }
 
 .v2-page .card {
-  background: #ffffff;
-  border: 1px solid rgba(16, 41, 33, 0.08);
-  box-shadow: 0 12px 28px rgba(15, 40, 32, 0.08);
+  background: linear-gradient(145deg, rgba(20, 30, 28, 0.96), rgba(16, 24, 22, 0.9));
+  border: 1px solid rgba(111, 214, 164, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .v2-page .section-title,
@@ -722,45 +729,78 @@ button:hover {
 .v2-page .implication-card h4,
 .v2-page .v2-metric strong,
 .v2-page .v2-table td {
-  color: #1c2b28;
+  color: var(--ink);
+}
+
+.v2-page .notice {
+  background: rgba(241, 200, 106, 0.15);
+  border-color: rgba(241, 200, 106, 0.3);
+  color: var(--accent-2);
+}
+
+.v2-page .submit-button {
+  background: linear-gradient(135deg, var(--accent) 0%, #8af1c1 100%);
+  color: #0c1110;
+}
+
+.v2-page .submit-button:hover:not(:disabled) {
+  box-shadow: 0 14px 38px rgba(111, 214, 164, 0.4) !important;
 }
 
 .v2-page .address-input {
-  background: #ffffff !important;
-  color: #1d2a28 !important;
-  border: 1px solid rgba(16, 41, 33, 0.15) !important;
+  background: linear-gradient(135deg,
+      rgba(20, 30, 28, 0.8) 0%,
+      rgba(16, 24, 22, 0.9) 100%) !important;
+  color: var(--ink) !important;
+  border: 2px solid rgba(111, 214, 164, 0.2) !important;
 }
 
 .v2-page .address-input::placeholder {
-  color: #8ea09b;
+  color: rgba(169, 182, 176, 0.6);
 }
 
 .v2-page .tab-button {
-  background: #f3f8f7;
-  color: #2b3c38;
-  border-color: rgba(16, 41, 33, 0.12);
+  background: rgba(111, 214, 164, 0.08);
+  color: var(--ink);
+  border-color: rgba(111, 214, 164, 0.18);
 }
 
 .v2-page .tab-button.active {
-  background: rgba(111, 214, 164, 0.25);
-  color: #1f322d;
+  background: rgba(111, 214, 164, 0.22);
+  color: var(--ink);
+  border-color: rgba(111, 214, 164, 0.48);
 }
 
 .v2-page .signal-item {
-  background: #fbfdfc;
-  border: 1px solid rgba(16, 41, 33, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .v2-page .v2-signal-group {
-  background: #f8fcfb;
-  border: 1px solid rgba(16, 41, 33, 0.08);
+  background: linear-gradient(180deg, rgba(19, 28, 26, 0.75), rgba(14, 20, 18, 0.65));
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .v2-page .v2-table th {
-  color: #60716d;
+  color: var(--muted);
 }
 
 .v2-page .v2-table th,
 .v2-page .v2-table td {
-  border-bottom: 1px solid rgba(16, 41, 33, 0.1);
+  border-bottom: 1px solid rgba(111, 214, 164, 0.15);
+}
+
+.v2-page .secondary-button {
+  color: var(--ink);
+  border-color: rgba(111, 214, 164, 0.35);
+  background: transparent;
+}
+
+.v2-page .secondary-button:hover {
+  background: transparent;
+  border-color: rgba(111, 214, 164, 0.65);
+}
+
+.v2-page .v2-links-row a {
+  color: var(--accent);
 }
