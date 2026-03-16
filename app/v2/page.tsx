@@ -255,6 +255,21 @@ export default function V2Page() {
 
       {data && (
         <section className="fade-in">
+          <div className="v2-site-summary">
+            <div className="v2-site-header">
+              <div className="v2-site-kicker">Site</div>
+              <h2 className="section-header v2-site-title">Site Address</h2>
+              <div className="v2-site-address-card">
+                <div className="v2-site-address">{data.address}</div>
+                {data.location && (
+                  <div className="v2-site-coordinates">
+                    {data.location.lat.toFixed(5)}, {data.location.lon.toFixed(5)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="card">
             <div className="section-title">Pre-Bid Summary</div>
             <div className="v2-metrics-grid">
