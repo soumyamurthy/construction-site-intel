@@ -145,7 +145,6 @@ function toCsv(data: V2AnalysisResult): string {
 
 export default function V2Page() {
   const [address, setAddress] = useState(DEFAULT_ADDRESS);
-  const [baselineCostUsd, setBaselineCostUsd] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>("signals");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,10 +172,7 @@ export default function V2Page() {
       const res = await fetch("/api/analyze-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address,
-          baselineCostUsd: baselineCostUsd ? Number(baselineCostUsd) : undefined
-        })
+        body: JSON.stringify({ address })
       });
       const payload = await res.json();
       if (!res.ok) {
@@ -208,40 +204,27 @@ export default function V2Page() {
               onChange={(event) => setAddress(event.target.value)}
               placeholder="123 Main St, City, ST 12345"
             />
-            <input
-              className="address-input v2-hero-input"
-              type="number"
-              min={0}
-              step="1000"
-              value={baselineCostUsd}
-              onChange={(event) => setBaselineCostUsd(event.target.value)}
-              placeholder="Optional baseline project cost (USD)"
-            />
             <button type="submit" className="submit-button v2-hero-button" disabled={loading}>
               {loading ? "Analyzing..." : "Run V2 Analysis"}
             </button>
-            <div className="v2-links-row">
-              <a href="/">Demo Home</a>
-              <a href="/v1">Open V1 Demo</a>
-              {data && (
-                <>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => downloadFile("site-intel-v2.json", JSON.stringify(data, null, 2), "application/json")}
-                  >
-                    Export JSON
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => downloadFile("site-intel-v2.csv", toCsv(data), "text/csv")}
-                  >
-                    Export CSV
-                  </button>
-                </>
-              )}
-            </div>
+            {data && (
+              <div className="v2-export-row">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => downloadFile("site-intel-v2.json", JSON.stringify(data, null, 2), "application/json")}
+                >
+                  Export JSON
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => downloadFile("site-intel-v2.csv", toCsv(data), "text/csv")}
+                >
+                  Export CSV
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </section>
