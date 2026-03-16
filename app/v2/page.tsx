@@ -18,35 +18,65 @@ type SignalGroup = {
 
 const IMPORTANT_SIGNAL_GROUPS: SignalGroup[] = [
   {
-    key: "regulatory",
-    title: "Regulatory and Environmental",
-    icon: "🔥",
-    subtitle: "Permitting, flood, fire, and environmental exposure",
-    ids: ["flood-zone", "wetland-constraint-proxy", "wildfire-risk", "permitting-complexity-proxy"]
+    key: "flood",
+    title: "Flood Hazards",
+    icon: "💧",
+    subtitle: "Floodplain status, elevation requirements, and environmental wetness constraints",
+    ids: ["flood-zone", "base-flood-elevation", "wetland-constraint-proxy"]
   },
   {
-    key: "structural",
-    title: "Structural and Climate Loads",
+    key: "seismic-climate",
+    title: "Seismic & Climate Loads",
     icon: "⚡",
-    subtitle: "Code-driven structural loading and lateral demands",
+    subtitle: "Lateral demands and weather-driven loading conditions",
     ids: ["sdc", "sds", "sd1", "wind-load-proxy", "snow-load-proxy"]
   },
   {
-    key: "ground",
-    title: "Ground and Site Conditions",
+    key: "soils",
+    title: "Soils",
     icon: "🏔️",
-    subtitle: "Subgrade quality, slope, and constructability drivers",
-    ids: ["soil-drainage", "clay", "site-slope", "utility-capacity-proxy", "logistics-access-proxy"]
+    subtitle: "Drainage, hydrology, clay content, and subsurface restrictions",
+    ids: ["soil-drainage", "hydro-group", "clay", "restrictive-depth"]
+  },
+  {
+    key: "terrain-logistics",
+    title: "Terrain & Logistics",
+    icon: "🗻",
+    subtitle: "Topography, access constraints, and utility context",
+    ids: ["site-slope", "logistics-access-proxy", "utility-capacity-proxy"]
+  },
+  {
+    key: "environmental",
+    title: "Environmental & Permitting",
+    icon: "🔥",
+    subtitle: "Wildfire exposure and review-path complexity",
+    ids: ["wildfire-risk", "permitting-complexity-proxy"]
   }
 ];
 
-function groupImportantSignals(signals: Signal[]): Array<SignalGroup & { signals: Signal[] }> {
-  return IMPORTANT_SIGNAL_GROUPS.map((group) => ({
+function groupAllSignals(signals: Signal[]): Array<SignalGroup & { signals: Signal[] }> {
+  const grouped = IMPORTANT_SIGNAL_GROUPS.map((group) => ({
     ...group,
     signals: group.ids
       .map((id) => signals.find((signal) => signal.id === id))
       .filter((signal): signal is Signal => Boolean(signal))
   })).filter((group) => group.signals.length > 0);
+
+  const groupedIds = new Set(grouped.flatMap((group) => group.signals.map((signal) => signal.id)));
+  const uncategorizedSignals = signals.filter((signal) => !groupedIds.has(signal.id));
+
+  if (uncategorizedSignals.length > 0) {
+    grouped.push({
+      key: "other",
+      title: "Additional Signals",
+      icon: "📌",
+      subtitle: "Signals not yet mapped to a dedicated V2 category",
+      ids: uncategorizedSignals.map((signal) => signal.id),
+      signals: uncategorizedSignals
+    });
+  }
+
+  return grouped;
 }
 
 function downloadFile(filename: string, content: string, type: string) {
@@ -115,8 +145,8 @@ export default function V2Page() {
   const [data, setData] = useState<V2AnalysisResult | null>(null);
 
   const topDrivers = useMemo(() => data?.costDrivers.slice(0, 5) ?? [], [data]);
-  const groupedImportantSignals = useMemo(
-    () => (data ? groupImportantSignals(data.signals) : []),
+  const groupedSignals = useMemo(
+    () => (data ? groupAllSignals(data.signals) : []),
     [data]
   );
 
@@ -272,35 +302,37 @@ export default function V2Page() {
           {activeTab === "signals" && (
             <div className="fade-in">
               <h2 className="section-header">Risk & Design Signals</h2>
-              <div className="signal-groups">
-                {groupedImportantSignals.map((group) => {
-                  const hasHighSeverity = group.signals.some((signal) => signal.severity === "high");
+              <div className="v2-signals-scroll">
+                <div className="signal-groups">
+                  {groupedSignals.map((group) => {
+                    const hasHighSeverity = group.signals.some((signal) => signal.severity === "high");
 
-                  return (
-                    <section key={group.key} className="signal-group" data-high={hasHighSeverity}>
-                      <header className="group-header">
-                        <span className="group-icon">{group.icon}</span>
-                        <div className="v2-group-heading">
-                          <h3>{group.title}</h3>
-                          <p className="group-subtitle">{group.subtitle}</p>
-                        </div>
-                        {hasHighSeverity && <span className="alert-badge">⚠️ High</span>}
-                      </header>
-                    <div className="signals-list">
-                      {group.signals.map((signal) => (
-                        <div key={signal.id} className={`signal-item severity-${signal.severity}`}>
-                          <div className="signal-header">
-                            <span className="signal-name">{signal.label}</span>
-                            <span className={`severity-badge severity-${signal.severity}`}>{signal.severity}</span>
+                    return (
+                      <section key={group.key} className="signal-group" data-high={hasHighSeverity}>
+                        <header className="group-header">
+                          <span className="group-icon">{group.icon}</span>
+                          <div className="v2-group-heading">
+                            <h3>{group.title}</h3>
+                            <p className="group-subtitle">{group.subtitle}</p>
                           </div>
-                          <div className="signal-value">{signal.value}</div>
-                          <p className="signal-explanation">{signal.explanation}</p>
+                          {hasHighSeverity && <span className="alert-badge">⚠️ High</span>}
+                        </header>
+                        <div className="signals-list">
+                          {group.signals.map((signal) => (
+                            <div key={signal.id} className={`signal-item severity-${signal.severity}`}>
+                              <div className="signal-header">
+                                <span className="signal-name">{signal.label}</span>
+                                <span className={`severity-badge severity-${signal.severity}`}>{signal.severity}</span>
+                              </div>
+                              <div className="signal-value">{signal.value}</div>
+                              <p className="signal-explanation">{signal.explanation}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    </section>
-                  );
-                })}
+                      </section>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
