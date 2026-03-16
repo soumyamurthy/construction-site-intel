@@ -11,6 +11,7 @@ type TabId = "signals" | "cost" | "actions" | "report";
 type SignalGroup = {
   key: string;
   title: string;
+  icon: string;
   subtitle: string;
   ids: string[];
 };
@@ -19,18 +20,21 @@ const IMPORTANT_SIGNAL_GROUPS: SignalGroup[] = [
   {
     key: "regulatory",
     title: "Regulatory and Environmental",
+    icon: "🔥",
     subtitle: "Permitting, flood, fire, and environmental exposure",
     ids: ["flood-zone", "wetland-constraint-proxy", "wildfire-risk", "permitting-complexity-proxy"]
   },
   {
     key: "structural",
     title: "Structural and Climate Loads",
+    icon: "⚡",
     subtitle: "Code-driven structural loading and lateral demands",
     ids: ["sdc", "sds", "sd1", "wind-load-proxy", "snow-load-proxy"]
   },
   {
     key: "ground",
     title: "Ground and Site Conditions",
+    icon: "🏔️",
     subtitle: "Subgrade quality, slope, and constructability drivers",
     ids: ["soil-drainage", "clay", "site-slope", "utility-capacity-proxy", "logistics-access-proxy"]
   }
@@ -266,15 +270,22 @@ export default function V2Page() {
           </div>
 
           {activeTab === "signals" && (
-            <div className="card">
-              <div className="section-title">Critical Signals</div>
-              <div className="v2-signal-groups">
-                {groupedImportantSignals.map((group) => (
-                  <section key={group.key} className="v2-signal-group">
-                    <header className="v2-group-header">
-                      <h3>{group.title}</h3>
-                      <p>{group.subtitle}</p>
-                    </header>
+            <div className="fade-in">
+              <h2 className="section-header">Risk & Design Signals</h2>
+              <div className="signal-groups">
+                {groupedImportantSignals.map((group) => {
+                  const hasHighSeverity = group.signals.some((signal) => signal.severity === "high");
+
+                  return (
+                    <section key={group.key} className="signal-group" data-high={hasHighSeverity}>
+                      <header className="group-header">
+                        <span className="group-icon">{group.icon}</span>
+                        <div className="v2-group-heading">
+                          <h3>{group.title}</h3>
+                          <p className="group-subtitle">{group.subtitle}</p>
+                        </div>
+                        {hasHighSeverity && <span className="alert-badge">⚠️ High</span>}
+                      </header>
                     <div className="signals-list">
                       {group.signals.map((signal) => (
                         <div key={signal.id} className={`signal-item severity-${signal.severity}`}>
@@ -287,8 +298,9 @@ export default function V2Page() {
                         </div>
                       ))}
                     </div>
-                  </section>
-                ))}
+                    </section>
+                  );
+                })}
               </div>
             </div>
           )}

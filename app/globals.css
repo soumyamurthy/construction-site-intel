@@ -294,6 +294,17 @@ button:hover {
   color: var(--ink);
 }
 
+.v2-group-heading {
+  flex: 1;
+}
+
+.group-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 .alert-badge {
   background: rgba(240, 138, 122, 0.2);
   border: 1px solid rgba(240, 138, 122, 0.4);
