@@ -193,23 +193,23 @@ export default function V2Page() {
 
   return (
     <main className="v2-page">
-      <section className="hero">
-        <div>
-          <span className="tag">Site Intel V2</span>
+      <section className="hero v2-hero">
+        <div className="v2-hero-copy">
+          <span className="tag">Construction Site Intelligence</span>
           <h1>Pre-bid cost drivers, contingency guidance, and action ownership.</h1>
           <p>Includes AI-assisted deductions layered on source data to accelerate early-stage estimating decisions.</p>
         </div>
-        <div className="card fade-in">
-          <form className="form" onSubmit={handleSubmit}>
-            <label className="address-label">Site Address</label>
+        <div className="card fade-in v2-hero-card">
+          <form className="form v2-hero-form" onSubmit={handleSubmit}>
+            <label className="address-label v2-address-label">Site Address</label>
             <input
-              className="address-input"
+              className="address-input v2-hero-input"
               value={address}
               onChange={(event) => setAddress(event.target.value)}
               placeholder="123 Main St, City, ST 12345"
             />
             <input
-              className="address-input"
+              className="address-input v2-hero-input"
               type="number"
               min={0}
               step="1000"
@@ -217,7 +217,7 @@ export default function V2Page() {
               onChange={(event) => setBaselineCostUsd(event.target.value)}
               placeholder="Optional baseline project cost (USD)"
             />
-            <button type="submit" className="submit-button" disabled={loading}>
+            <button type="submit" className="submit-button v2-hero-button" disabled={loading}>
               {loading ? "Analyzing..." : "Run V2 Analysis"}
             </button>
             <div className="v2-links-row">
@@ -271,7 +271,7 @@ export default function V2Page() {
           </div>
 
           <div className="card">
-            <div className="section-title">Pre-Bid Summary</div>
+            <div className="section-title">Summary</div>
             <div className="v2-metrics-grid">
               <div className="v2-metric">
                 <div>Confidence Score</div>
