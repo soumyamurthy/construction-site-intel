@@ -25,11 +25,18 @@ const IMPORTANT_SIGNAL_GROUPS: SignalGroup[] = [
     ids: ["flood-zone", "base-flood-elevation", "wetland-constraint-proxy"]
   },
   {
-    key: "seismic-climate",
-    title: "Seismic & Climate Loads",
+    key: "seismic",
+    title: "Seismic",
     icon: "⚡",
-    subtitle: "Lateral demands and weather-driven loading conditions",
-    ids: ["sdc", "sds", "sd1", "wind-load-proxy", "snow-load-proxy"]
+    subtitle: "Code-driven lateral demands and seismic design criteria",
+    ids: ["sdc", "sds", "sd1"]
+  },
+  {
+    key: "climate-loads",
+    title: "Wind & Snow",
+    icon: "🌨️",
+    subtitle: "Weather-driven loading conditions affecting envelope and structure",
+    ids: ["wind-load-proxy", "snow-load-proxy"]
   },
   {
     key: "soils",

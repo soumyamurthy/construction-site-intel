@@ -306,9 +306,10 @@ button:hover {
 }
 
 .v2-signals-scroll {
-  max-height: min(72vh, 980px);
-  overflow-y: auto;
+  max-height: min(58vh, 760px);
+  overflow-y: scroll;
   padding-right: 8px;
+  scrollbar-gutter: stable;
 }
 
 .v2-signals-scroll::-webkit-scrollbar {
