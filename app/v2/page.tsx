@@ -193,13 +193,13 @@ export default function V2Page() {
 
   return (
     <main className="v2-page">
-      <section className="hero v2-hero">
-        <div className="v2-hero-copy">
+      <section className="hero v2-hero v2-top-stage">
+        <div className="v2-hero-copy v2-top-panel v2-title-panel">
           <span className="tag">Construction Site Intelligence</span>
           <h1>Pre-bid cost drivers, contingency guidance, and action ownership.</h1>
           <p>Includes AI-assisted deductions layered on source data to accelerate early-stage estimating decisions.</p>
         </div>
-        <div className="card fade-in v2-hero-card">
+        <div className="card fade-in v2-hero-card v2-top-panel">
           <form className="form v2-hero-form" onSubmit={handleSubmit}>
             <label className="address-label v2-address-label">Site Address</label>
             <input
@@ -244,6 +244,22 @@ export default function V2Page() {
             </div>
           </form>
         </div>
+        <div className="v2-site-summary v2-top-panel">
+          <div className="v2-site-header">
+            <div className="v2-site-kicker">Site Address</div>
+            <h2 className="section-header v2-site-title">
+              {data ? "Matched Project Site" : "Current Project Site"}
+            </h2>
+            <div className="v2-site-address-card">
+              <div className="v2-site-address">{data?.address ?? address}</div>
+              <div className="v2-site-coordinates">
+                {data?.location
+                  ? `${data.location.lat.toFixed(5)}, ${data.location.lon.toFixed(5)}`
+                  : "Run analysis to pin the geocoded location and coordinates."}
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {error && (
@@ -255,21 +271,6 @@ export default function V2Page() {
 
       {data && (
         <section className="fade-in">
-          <div className="v2-site-summary">
-            <div className="v2-site-header">
-              <div className="v2-site-kicker">Site</div>
-              <h2 className="section-header v2-site-title">Site Address</h2>
-              <div className="v2-site-address-card">
-                <div className="v2-site-address">{data.address}</div>
-                {data.location && (
-                  <div className="v2-site-coordinates">
-                    {data.location.lat.toFixed(5)}, {data.location.lon.toFixed(5)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
           <div className="card">
             <div className="section-title">Summary</div>
             <div className="v2-metrics-grid">

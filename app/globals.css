@@ -309,46 +309,79 @@ button:hover {
   margin-bottom: 18px;
 }
 
+.v2-top-stage {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.9fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  align-items: stretch;
+  min-height: min(26vh, 260px);
+}
+
 .v2-hero {
-  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
-  gap: 34px;
   align-items: stretch;
 }
 
-.v2-hero-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.v2-top-panel {
   min-width: 0;
 }
 
+.v2-hero-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 28px;
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(360px 220px at 0% 0%, rgba(111, 214, 164, 0.14), transparent 60%),
+    linear-gradient(145deg, rgba(24, 36, 33, 0.92), rgba(14, 21, 19, 0.85));
+  border: 1px solid rgba(111, 214, 164, 0.12);
+  box-shadow: var(--shadow);
+}
+
+.v2-title-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto -8% -28% auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(241, 200, 106, 0.14), transparent 68%);
+  pointer-events: none;
+}
+
 .v2-hero-card {
-  padding: 28px;
+  padding: 22px;
+  border-radius: 24px;
 }
 
 .v2-hero-form {
-  gap: 16px;
+  gap: 12px;
 }
 
 .v2-address-label {
-  font-size: 1rem;
-  letter-spacing: 0.01em;
+  font-size: 0.96rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .v2-hero-input {
-  min-height: 62px;
-  font-size: 1.06rem !important;
+  min-height: 54px;
+  font-size: 1rem !important;
 }
 
 .v2-hero-button {
-  min-height: 58px;
-  font-size: 1.08rem !important;
+  min-height: 52px;
+  font-size: 1rem !important;
 }
 
 .v2-site-header {
   position: relative;
   overflow: hidden;
-  padding: 24px 26px;
+  height: 100%;
+  padding: 22px;
   border-radius: 22px;
   border: 1px solid rgba(111, 214, 164, 0.16);
   background:
@@ -384,16 +417,17 @@ button:hover {
 .v2-site-title {
   position: relative;
   z-index: 1;
-  margin-top: 14px;
-  margin-bottom: 18px;
+  margin-top: 12px;
+  margin-bottom: 14px;
+  font-size: clamp(1.1rem, 1.6vw, 1.45rem);
 }
 
 .v2-site-address-card {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 8px;
-  padding: 18px 20px;
+  gap: 6px;
+  padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: linear-gradient(180deg, rgba(15, 23, 21, 0.78), rgba(15, 23, 21, 0.58));
@@ -401,19 +435,21 @@ button:hover {
 }
 
 .v2-site-address {
-  font-size: clamp(1rem, 1.4vw, 1.18rem);
+  font-size: clamp(1rem, 1.2vw, 1.08rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--ink);
-  line-height: 1.25;
-  white-space: nowrap;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .v2-site-coordinates {
   color: var(--muted);
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
 
@@ -853,14 +889,21 @@ button:hover {
 
 .v2-page .tag {
   color: var(--accent);
+  font-size: clamp(0.86rem, 1vw, 0.96rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 0;
 }
 
 .v2-page .hero h1 {
-  color: var(--muted);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.45;
-  max-width: 48ch;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: clamp(2rem, 3.8vw, 3.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  max-width: 11ch;
+  margin: 0;
 }
 
 .v2-page .hero p,
@@ -873,8 +916,9 @@ button:hover {
 }
 
 .v2-page .hero p {
-  max-width: 60ch;
-  font-size: 1.08rem;
+  max-width: 44ch;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .v2-page .card {
@@ -971,9 +1015,14 @@ button:hover {
     gap: 22px;
   }
 
+  .v2-top-stage {
+    min-height: auto;
+  }
+
   .v2-page .hero h1 {
     max-width: none;
     font-size: clamp(1.8rem, 8vw, 2.7rem);
+    line-height: 1.02;
   }
 
   .v2-hero-card {
@@ -986,5 +1035,8 @@ button:hover {
 
   .v2-site-address {
     font-size: 0.98rem;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    display: block;
   }
 }
