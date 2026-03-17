@@ -21,6 +21,10 @@ export default function Home() {
               <h4>V2 - Estimator + PM</h4>
               <p>Cost driver register, contingency range, PM actions, and pre-bid brief exports.</p>
             </a>
+            <a className="implication-card" href="/v3">
+              <h4>V3 - Demo Readable UI</h4>
+              <p>V2 workflow with larger typography and improved readability for live demos.</p>
+            </a>
           </div>
           <div className="notice" style={{ marginTop: "12px" }}>
             Tip: Start with the same address in both versions to show the evolution clearly.

@@ -917,6 +917,54 @@ button:hover {
   border-color: rgba(111, 214, 164, 0.65);
 }
 
+.v3-page {
+  font-size: 16px;
+}
+
+.v3-page .tag {
+  font-size: clamp(0.95rem, 1.1vw, 1.08rem);
+}
+
+.v3-page .hero h1 {
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+}
+
+.v3-page .hero p {
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+.v3-page .v2-address-label,
+.v3-page .section-title,
+.v3-page .v2-metric div,
+.v3-page .v2-table th,
+.v3-page .v2-table td,
+.v3-page .tab-button,
+.v3-page .signal-name,
+.v3-page .signal-explanation,
+.v3-page .group-subtitle,
+.v3-page .v2-list {
+  font-size: 0.96rem;
+}
+
+.v3-page .v2-hero-input,
+.v3-page .v2-hero-button,
+.v3-page .secondary-button {
+  font-size: 1rem !important;
+}
+
+.v3-page .v2-hero-input {
+  min-height: 58px;
+}
+
+.v3-page .v2-hero-button {
+  min-height: 58px;
+}
+
+.v3-page .v2-metric strong {
+  font-size: 1.08rem;
+}
+
 @media (max-width: 900px) {
   .v2-hero {
     grid-template-columns: 1fr;
@@ -943,5 +991,9 @@ button:hover {
 
   .v2-hero-button {
     width: 100%;
+  }
+
+  .v3-page .hero h1 {
+    font-size: clamp(2rem, 9vw, 3rem);
   }
 }
