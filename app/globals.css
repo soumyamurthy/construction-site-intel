@@ -347,6 +347,15 @@ button:hover {
   align-items: center;
 }
 
+.v2-input-container {
+  min-width: 0;
+}
+
+.v2-recent-dropdown {
+  margin-top: 6px;
+  border-radius: 12px;
+}
+
 .v2-hero-input {
   min-height: 54px;
   font-size: 1rem !important;
@@ -926,6 +935,10 @@ button:hover {
 
   .v2-input-row {
     grid-template-columns: 1fr;
+  }
+
+  .v2-recent-dropdown {
+    max-height: 280px;
   }
 
   .v2-hero-button {

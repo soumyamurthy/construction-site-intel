@@ -149,6 +149,8 @@ export default function V2Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<V2AnalysisResult | null>(null);
+  const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
 
   const topDrivers = useMemo(() => data?.costDrivers.slice(0, 5) ?? [], [data]);
   const groupedSignals = useMemo(
@@ -162,6 +164,31 @@ export default function V2Page() {
       document.body.classList.remove("v2-body");
     };
   }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("recentAddressesV2");
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter((item) => typeof item === "string" && item.trim().length > 0);
+        setRecentAddresses(valid.slice(0, 8));
+      }
+    } catch {
+      // Ignore malformed localStorage value.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!data || !address.trim()) return;
+    const currentAddress = address.trim();
+    setRecentAddresses((prev) => {
+      const deduped = prev.filter((item) => item !== currentAddress);
+      const updated = [currentAddress, ...deduped].slice(0, 8);
+      localStorage.setItem("recentAddressesV2", JSON.stringify(updated));
+      return updated;
+    });
+  }, [data, address]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -200,12 +227,35 @@ export default function V2Page() {
           <form className="form v2-hero-form" onSubmit={handleSubmit}>
             <label className="address-label v2-address-label">Site Address</label>
             <div className="v2-input-row">
-              <input
-                className="address-input v2-hero-input"
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="123 Main St, City, ST 12345"
-              />
+              <div className="input-container v2-input-container">
+                <input
+                  className="address-input v2-hero-input"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  onFocus={() => setShowRecent(true)}
+                  onBlur={() => setTimeout(() => setShowRecent(false), 150)}
+                  placeholder="123 Main St, City, ST 12345"
+                  autoComplete="off"
+                />
+                {recentAddresses.length > 0 && showRecent && (
+                  <div className="recent-addresses-dropdown v2-recent-dropdown">
+                    {recentAddresses.map((addr) => (
+                      <button
+                        key={addr}
+                        type="button"
+                        className="recent-address-item"
+                        onClick={() => {
+                          setAddress(addr);
+                          setShowRecent(false);
+                        }}
+                      >
+                        <span className="recent-icon">⏱️</span>
+                        <span>{addr}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button type="submit" className="submit-button v2-hero-button" disabled={loading}>
                 {loading ? "Analyzing..." : "Run V2 Analysis"}
               </button>
