@@ -44,18 +44,19 @@ export async function POST(req: NextRequest) {
     const facts: Fact[] = [];
 
     const geocode = await geocodeAddress(address);
+    const geocodeSource = geocode.source ?? "Geocoder";
     addFact(facts, {
-      source: "US Census Geocoder",
+      source: geocodeSource,
       label: "Matched Address",
       value: geocode.matchedAddress ?? address
     });
     addFact(facts, {
-      source: "US Census Geocoder",
+      source: geocodeSource,
       label: "Latitude",
       value: geocode.location.lat
     });
     addFact(facts, {
-      source: "US Census Geocoder",
+      source: geocodeSource,
       label: "Longitude",
       value: geocode.location.lon
     });

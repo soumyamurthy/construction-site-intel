@@ -19,15 +19,42 @@ async function fetchJson<T>(url: string, init?: RequestInit, timeoutMs = DEFAULT
 export type GeocodeResult = {
   matchedAddress?: string;
   location: GeoPoint;
+  source?: string;
 };
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
-  const addressVariations = [
-    address, // Original
-    address.replace(/^[A-Z]One\s/, "One "), // Fix "EOne" typo
-    address.split(",").slice(0, -1).join(",").trim(), // Remove ZIP code
-    address.split(",").slice(1).join(",").trim() // City, State, ZIP only
-  ];
+  const normalized = address
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .trim();
+  const parts = normalized.split(",").map((part) => part.trim()).filter(Boolean);
+  const lastPart = parts[parts.length - 1] ?? "";
+  const lastMatch = lastPart.match(/^([A-Za-z]{2})(?:\s+(\d{5}(?:-\d{4})?))?$/);
+  const state = lastMatch?.[1]?.toUpperCase();
+  const zip = lastMatch?.[2];
+  const city = parts.length >= 2 ? parts[parts.length - 2] : undefined;
+
+  const candidates = new Set<string>();
+  candidates.add(address.trim());
+  candidates.add(normalized);
+  candidates.add(normalized.replace(/^[A-Z]One\s/, "One "));
+  candidates.add(normalized.replace(/(\b[A-Za-z]{2})\s+\d{5}(?:-\d{4})?$/, "$1").trim());
+
+  if (city && state) {
+    if (parts.length >= 3) {
+      const street = parts.slice(0, -2).join(", ");
+      candidates.add(`${street}, ${city}, ${state}`);
+      if (zip) {
+        candidates.add(`${street}, ${city}, ${state} ${zip}`);
+      }
+    }
+    candidates.add(`${city}, ${state}`);
+    if (zip) {
+      candidates.add(`${city}, ${state} ${zip}`);
+    }
+  }
+
+  const addressVariations = Array.from(candidates).filter(Boolean);
 
   // Try Census Geocoder first (most accurate for US)
   for (const addr of addressVariations) {
@@ -40,7 +67,8 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
       if (match?.coordinates) {
         return {
           matchedAddress: match.matchedAddress,
-          location: { lat: match.coordinates.y, lon: match.coordinates.x }
+          location: { lat: match.coordinates.y, lon: match.coordinates.x },
+          source: "US Census Geocoder"
         };
       }
     } catch (err) {
@@ -49,35 +77,60 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
     }
   }
 
-  // Fallback: Try OpenStreetMap Nominatim (free, no API key)
-  try {
-    const encoded = encodeURIComponent(address);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
-    // Nominatim requires a User-Agent header
-    const data = await fetchJson<any>(url, {
-      headers: {
-        'User-Agent': 'construction-site-intel/1.0 (site-intelligence-app)'
-      }
-    }, 8000);
-
-    if (data && Array.isArray(data) && data.length > 0) {
-      const match = data[0];
-      return {
-        matchedAddress: match.display_name || address,
-        location: {
-          lat: parseFloat(match.lat),
-          lon: parseFloat(match.lon)
+  // Fallback 1: OpenStreetMap Nominatim (free, no API key)
+  for (const addr of addressVariations) {
+    try {
+      const encoded = encodeURIComponent(addr);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+      const data = await fetchJson<any>(url, {
+        headers: {
+          "User-Agent": "construction-site-intel/1.0 (site-intelligence-app)",
+          "Accept-Language": "en-US,en;q=0.9"
         }
-      };
+      }, 9000);
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        const match = data[0];
+        return {
+          matchedAddress: match.display_name || addr,
+          location: {
+            lat: parseFloat(match.lat),
+            lon: parseFloat(match.lon)
+          },
+          source: "OpenStreetMap Nominatim"
+        };
+      }
+    } catch (err) {
+      continue;
     }
-  } catch (err) {
-    // Nominatim failed too
+  }
+
+  // Fallback 2: Open-Meteo geocoding (robust for city/state and many street-level queries)
+  for (const addr of addressVariations) {
+    try {
+      const encoded = encodeURIComponent(addr);
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encoded}&count=1&language=en&format=json`;
+      const data = await fetchJson<any>(url, undefined, 9000);
+      const result = data?.results?.[0];
+      if (result && Number.isFinite(result.latitude) && Number.isFinite(result.longitude)) {
+        const labelParts = [result.name, result.admin1, result.country_code].filter(Boolean);
+        return {
+          matchedAddress: labelParts.length > 0 ? labelParts.join(", ") : addr,
+          location: {
+            lat: Number(result.latitude),
+            lon: Number(result.longitude)
+          },
+          source: "Open-Meteo Geocoding"
+        };
+      }
+    } catch (err) {
+      continue;
+    }
   }
 
   throw new Error(
     `Could not geocode address: "${address}". ` +
-    `Please try a different address format (e.g., "123 Main St, City, State" or "City, State"). ` +
-    `The geocoder works best with standard US addresses in official databases.`
+    `Please try a standard format like "123 Main St, City, ST 12345" or "City, ST".`
   );
 }
 
