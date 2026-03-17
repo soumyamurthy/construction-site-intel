@@ -5,7 +5,8 @@ import {
   fetchSoils,
   fetchUSGSDesignMap,
   geocodeAddress,
-  fetchFireHazard
+  fetchFireHazard,
+  fetchSPCTornadoOutlook
 } from "../../../lib/sources";
 import { buildImplications, buildSignals } from "../../../lib/signals";
 import { AnalysisResult, Fact } from "../../../lib/types";
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
       value: geocode.location.lon
     });
 
-    const [usgs, fema, soils, elevation, fire] = await Promise.all([
+    const [usgs, fema, soils, elevation, fire, severe] = await Promise.all([
       fetchUSGSDesignMap(geocode.location).catch((err) => {
         warnings.push(`USGS design maps unavailable: ${err.message}`);
         return undefined;
@@ -65,6 +66,10 @@ export async function POST(req: NextRequest) {
       }),
       fetchFireHazard(geocode.location).catch((err) => {
         warnings.push(`Fire hazard data unavailable: ${err.message}`);
+        return undefined;
+      }),
+      fetchSPCTornadoOutlook(geocode.location).catch((err) => {
+        warnings.push(`NOAA SPC tornado outlook unavailable: ${err.message}`);
         return undefined;
       })
     ]);
@@ -88,9 +93,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (fema) {
-      addFact(facts, { source: "FEMA NFHL", label: "Flood Zone", value: fema.floodZone ?? null });
-      addFact(facts, { source: "FEMA NFHL", label: "Zone Subtype", value: fema.zoneSubtype ?? null });
-      addFact(facts, { source: "FEMA NFHL", label: "Base Flood Elevation", value: fema.staticBfe ?? null, unit: "ft" });
+      const femaSource = fema.source ?? "FEMA NFHL";
+      addFact(facts, { source: femaSource, label: "Flood Zone", value: fema.floodZone ?? null });
+      addFact(facts, { source: femaSource, label: "Zone Subtype", value: fema.zoneSubtype ?? null });
+      addFact(facts, { source: femaSource, label: "Base Flood Elevation", value: fema.staticBfe ?? null, unit: "ft" });
+      addFact(facts, {
+        source: femaSource,
+        label: "SFHA Nearby",
+        value: fema.sfhaNearby == null ? null : fema.sfhaNearby ? "Yes" : "No"
+      });
     }
 
     if (soils) {
@@ -145,7 +156,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const signals = buildSignals({ fema, usgs, soils, elevation, fire });
+    if (severe) {
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 1 Tornado Outlook",
+        value: severe.day1TornadoProbPct ?? null,
+        unit: "%"
+      });
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 2 Tornado Outlook",
+        value: severe.day2TornadoProbPct ?? null,
+        unit: "%"
+      });
+    }
+
+    const signals = buildSignals({ fema, usgs, soils, elevation, fire, severe });
     const implications = buildImplications(signals);
 
     const result: AnalysisResult = {

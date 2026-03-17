@@ -1,6 +1,10 @@
 import { GeoPoint } from "./types";
 
 const DEFAULT_TIMEOUT_MS = 12000;
+const FEMA_FLOOD_ZONE_LAYER_URL =
+  "https://hazards.fema.gov/arcgis/rest/services/FIRMette/NFHLREST_FIRMette/MapServer/20/query";
+const NOAA_SPC_MAPSERVER_URL =
+  "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer";
 
 async function fetchJson<T>(url: string, init?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
@@ -174,35 +178,77 @@ export type FEMAData = {
   zoneSubtype?: string;
   staticBfe?: number | null;
   firmPanel?: string;
+  sfhaNearby?: boolean;
+  sfhaSearchRadiusKm?: number;
+  source?: string;
 };
 
 export async function fetchFEMAFloodZone(point: GeoPoint): Promise<FEMAData> {
-  const url = `https://services.arcgis.com/2gdL2gxYNFY2TOUb/arcgis/rest/services/FEMA_National_Flood_Hazard_Layer/FeatureServer/0/query?geometry=${point.lon},${point.lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FLD_ZONE,ZONE_SUBTY,STATIC_BFE,DFIRM_ID&f=json`;
+  const searchRadiusKm = 1.5;
+  const latDelta = searchRadiusKm / 111.32;
+  const lonDelta = searchRadiusKm / (111.32 * Math.max(0.2, Math.cos((point.lat * Math.PI) / 180)));
   try {
-    const data = await fetchJson<any>(url);
-    const feature = data?.features?.[0]?.attributes;
-    if (feature && feature.FLD_ZONE) {
+    const pointUrl =
+      `${FEMA_FLOOD_ZONE_LAYER_URL}?geometry=${point.lon},${point.lat}` +
+      "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects" +
+      "&outFields=FLD_ZONE,ZONE_SUBTY,STATIC_BFE,DFIRM_ID,SFHA_TF&returnGeometry=false&f=json";
+
+    const pointData = await fetchJson<any>(pointUrl, undefined, 9000);
+    const feature = pointData?.features?.[0]?.attributes;
+
+    const envelope =
+      `${point.lon - lonDelta},${point.lat - latDelta},${point.lon + lonDelta},${point.lat + latDelta}`;
+    const nearbyUrl =
+      `${FEMA_FLOOD_ZONE_LAYER_URL}?geometry=${envelope}` +
+      "&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects" +
+      "&where=" + encodeURIComponent("(FLD_ZONE LIKE 'A%' OR FLD_ZONE LIKE 'V%')") +
+      "&returnCountOnly=true&f=json";
+
+    const nearbyData = await fetchJson<any>(nearbyUrl, undefined, 9000);
+    const sfhaNearby = Number(nearbyData?.count ?? 0) > 0;
+
+    if (feature?.FLD_ZONE) {
+      const rawBfe = feature?.STATIC_BFE;
+      const staticBfe =
+        typeof rawBfe === "number" && Number.isFinite(rawBfe) && rawBfe > -9998
+          ? rawBfe
+          : null;
+      const baseSubtype = feature?.ZONE_SUBTY ?? undefined;
+      const zoneSubtype =
+        sfhaNearby && !String(feature.FLD_ZONE).startsWith("A") && !String(feature.FLD_ZONE).startsWith("V")
+          ? `${baseSubtype ?? "Outside mapped areas"}; SFHA nearby within ~${searchRadiusKm} km`
+          : baseSubtype;
+
       return {
         floodZone: feature.FLD_ZONE,
-        zoneSubtype: feature?.ZONE_SUBTY ?? undefined,
-        staticBfe: feature?.STATIC_BFE ?? null,
-        firmPanel: feature?.DFIRM_ID ?? undefined
+        zoneSubtype,
+        staticBfe,
+        firmPanel: feature?.DFIRM_ID ?? undefined,
+        sfhaNearby,
+        sfhaSearchRadiusKm: searchRadiusKm,
+        source: "FEMA NFHL"
       };
     }
-    // Location is outside mapped FEMA areas (Zone X)
+
     return {
-      floodZone: "X",
-      zoneSubtype: "Outside mapped areas",
+      floodZone: undefined,
+      zoneSubtype: undefined,
       staticBfe: null,
-      firmPanel: undefined
+      firmPanel: undefined,
+      sfhaNearby,
+      sfhaSearchRadiusKm: searchRadiusKm,
+      source: "FEMA NFHL"
     };
   } catch (err) {
-    // On error, default to Zone X (outside mapped areas)
+    // Return unknown values on source failure to avoid false "low" interpretations.
     return {
-      floodZone: "X",
-      zoneSubtype: "Outside mapped areas",
+      floodZone: undefined,
+      zoneSubtype: undefined,
       staticBfe: null,
-      firmPanel: undefined
+      firmPanel: undefined,
+      sfhaNearby: undefined,
+      sfhaSearchRadiusKm: searchRadiusKm,
+      source: "FEMA NFHL"
     };
   }
 }
@@ -228,6 +274,16 @@ export type ClimateData = {
   p50AnnualSnowCm?: number | null;
   analysisYears?: number | null;
   source?: string;
+};
+
+export type SevereWeatherData = {
+  day1TornadoProbPct?: number | null;
+  day2TornadoProbPct?: number | null;
+  day1Significant?: boolean;
+  day2Significant?: boolean;
+  source?: string;
+  day1Valid?: string;
+  day2Valid?: string;
 };
 
 function buildWkt(point: GeoPoint, delta = 0.00025): string {
@@ -284,7 +340,7 @@ async function fetchNRCSSoilData(point: GeoPoint): Promise<SoilData> {
     const wkt = buildWkt(point, 0.0005); // Slightly larger buffer for fallback
 
     // Try to get component data directly
-    const sql = `SELECT TOP 1 compname, hydgrp, drainagecl 
+    const sql = `SELECT TOP 1 compname, hydgrp, drainagecl, resdept_r
       FROM component 
       WHERE mukey IN (SELECT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${wkt}'))
       ORDER BY comppct_r DESC`;
@@ -302,11 +358,17 @@ async function fetchNRCSSoilData(point: GeoPoint): Promise<SoilData> {
     const data = await res.json();
     const row = data?.Table?.[0];
 
+    const restrictiveRaw = Array.isArray(row) ? row[3] : row?.resdept_r;
+    const restrictiveDepthCm =
+      restrictiveRaw != null && restrictiveRaw !== "" && Number.isFinite(Number(restrictiveRaw))
+        ? Number(restrictiveRaw)
+        : null;
+
     return {
       compname: Array.isArray(row) ? row[0] : row?.compname,
       hydrologicGroup: Array.isArray(row) ? row[1] : row?.hydgrp,
       drainageClass: Array.isArray(row) ? row[2] : row?.drainagecl,
-      restrictiveDepthCm: null,
+      restrictiveDepthCm,
       clayPercent: null
     };
   } catch (err) {
@@ -332,15 +394,20 @@ export async function fetchSoils(point: GeoPoint): Promise<SoilData> {
       throw new Error("Could not extract mukey from response");
     }
 
-    // Step 2: Get component data (comppct_r, hydgrp, drainagecl)
-    const compSql = `SELECT TOP 1 compname, comppct_r, hydgrp, drainagecl FROM component WHERE mukey = '${mukey}' ORDER BY comppct_r DESC`;
+    // Step 2: Get component data (comppct_r, hydgrp, drainagecl, restrictive depth)
+    const compSql =
+      `SELECT TOP 1 compname, comppct_r, hydgrp, drainagecl, resdept_r ` +
+      `FROM component WHERE mukey = '${mukey}' ORDER BY comppct_r DESC`;
     const compRows = await sdaQuery(compSql, 3);
 
-    // Step 3: Get horizon data for clay content
-    const horizonSql = `SELECT TOP 1 claytotal_r FROM chorizon ch INNER JOIN component c ON c.cokey = ch.cokey WHERE c.mukey = '${mukey}' ORDER BY ch.hzdept_r ASC`;
+    // Step 3: Get maximum clay content in shallow profile (top 100 cm).
+    const horizonSql =
+      `SELECT MAX(claytotal_r) AS max_clay ` +
+      `FROM chorizon ch INNER JOIN component c ON c.cokey = ch.cokey ` +
+      `WHERE c.mukey = '${mukey}' AND ch.hzdept_r <= 100`;
     const horizonRows = await sdaQuery(horizonSql, 2);
 
-    // Parse component data (comes as array of [compname, comppct_r, hydgrp, drainagecl])
+    // Parse component data (comes as array of [compname, comppct_r, hydgrp, drainagecl, resdept_r])
     let compData: any = {};
     if (compRows && compRows.length > 0) {
       const row = compRows[0];
@@ -348,22 +415,29 @@ export async function fetchSoils(point: GeoPoint): Promise<SoilData> {
         compname: Array.isArray(row) ? row[0] : row?.compname,
         comppct_r: Array.isArray(row) ? row[1] : row?.comppct_r,
         hydgrp: Array.isArray(row) ? row[2] : row?.hydgrp,
-        drainagecl: Array.isArray(row) ? row[3] : row?.drainagecl
+        drainagecl: Array.isArray(row) ? row[3] : row?.drainagecl,
+        resdept_r: Array.isArray(row) ? row[4] : row?.resdept_r
       };
     }
 
     // Parse horizon data for clay
     let clayPercent: number | null = null;
     if (horizonRows && horizonRows.length > 0) {
-      const clayValue = Array.isArray(horizonRows[0]) ? horizonRows[0][0] : horizonRows[0]?.claytotal_r;
+      const clayValue = Array.isArray(horizonRows[0]) ? horizonRows[0][0] : horizonRows[0]?.max_clay;
       clayPercent = clayValue ? Number(clayValue) : null;
     }
+
+    const restrictiveDepthRaw = compData.resdept_r;
+    const restrictiveDepthCm =
+      restrictiveDepthRaw != null && Number.isFinite(Number(restrictiveDepthRaw))
+        ? Number(restrictiveDepthRaw)
+        : null;
 
     return {
       compname: compData.compname,
       hydrologicGroup: compData.hydgrp,
       drainageClass: compData.drainagecl,
-      restrictiveDepthCm: null, // Not available from basic queries
+      restrictiveDepthCm,
       clayPercent
     };
   } catch (primaryError) {
@@ -593,6 +667,53 @@ export async function fetchClimateNormals(point: GeoPoint): Promise<ClimateData>
       analysisYears: null,
       source: undefined
     };
+  }
+}
+
+async function fetchSpcOutlookMaxDn(layerId: number, point: GeoPoint): Promise<{ maxDn: number; valid?: string }> {
+  const url =
+    `${NOAA_SPC_MAPSERVER_URL}/${layerId}/query?geometry=${point.lon},${point.lat}` +
+    "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects" +
+    "&outFields=dn,valid&returnGeometry=false&f=json";
+
+  const data = await fetchJson<any>(url, undefined, 8000);
+  const features = Array.isArray(data?.features) ? data.features : [];
+  if (!features.length) {
+    return { maxDn: 0, valid: undefined };
+  }
+
+  let maxDn = 0;
+  let valid: string | undefined;
+  for (const feature of features) {
+    const attrs = feature?.attributes ?? {};
+    const dn = Number(attrs?.dn);
+    if (Number.isFinite(dn) && dn > maxDn) maxDn = dn;
+    if (!valid && typeof attrs?.valid === "string") valid = attrs.valid;
+  }
+
+  return { maxDn, valid };
+}
+
+export async function fetchSPCTornadoOutlook(point: GeoPoint): Promise<SevereWeatherData> {
+  try {
+    const [day1Prob, day2Prob, day1Sig, day2Sig] = await Promise.all([
+      fetchSpcOutlookMaxDn(3, point),
+      fetchSpcOutlookMaxDn(11, point),
+      fetchSpcOutlookMaxDn(2, point),
+      fetchSpcOutlookMaxDn(10, point)
+    ]);
+
+    return {
+      day1TornadoProbPct: day1Prob.maxDn,
+      day2TornadoProbPct: day2Prob.maxDn,
+      day1Significant: day1Sig.maxDn > 0,
+      day2Significant: day2Sig.maxDn > 0,
+      day1Valid: day1Prob.valid,
+      day2Valid: day2Prob.valid,
+      source: "NOAA SPC Convective Outlooks"
+    };
+  } catch (err) {
+    throw new Error(`NOAA SPC tornado outlook unavailable: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

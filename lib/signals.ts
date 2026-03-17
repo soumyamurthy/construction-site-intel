@@ -1,4 +1,11 @@
-import { FEMAData, SoilData, USGSDesignData, ElevationSummary, FireHazardData } from "./sources";
+import {
+  FEMAData,
+  SoilData,
+  USGSDesignData,
+  ElevationSummary,
+  FireHazardData,
+  SevereWeatherData
+} from "./sources";
 import { Implication, Signal } from "./types";
 
 function severityFromFloodZone(zone?: string): Signal["severity"] {
@@ -59,6 +66,16 @@ function severityFromSlope(slope?: number | null): Signal["severity"] {
   return "low";
 }
 
+function severityFromTornadoOutlook(args?: SevereWeatherData): Signal["severity"] {
+  if (!args) return "unknown";
+  const day1 = Number(args.day1TornadoProbPct ?? 0);
+  const day2 = Number(args.day2TornadoProbPct ?? 0);
+  const maxProb = Math.max(Number.isFinite(day1) ? day1 : 0, Number.isFinite(day2) ? day2 : 0);
+  if (args.day1Significant || args.day2Significant || maxProb >= 10) return "high";
+  if (maxProb >= 5) return "medium";
+  return "low";
+}
+
 function formatNumber(value?: number | null, digits = 2): string {
   if (value == null || Number.isNaN(value)) return "N/A";
   return value.toFixed(digits);
@@ -70,6 +87,7 @@ export function buildSignals(args: {
   soils?: SoilData;
   elevation?: ElevationSummary;
   fire?: FireHazardData;
+  severe?: SevereWeatherData;
 }): Signal[] {
   const signals: Signal[] = [];
 
@@ -82,20 +100,33 @@ export function buildSignals(args: {
   });
 
   signals.push({
+    id: "floodplain-proximity",
+    label: "Floodplain Proximity (FEMA SFHA)",
+    value: args.fema?.sfhaNearby == null
+      ? "Not available"
+      : args.fema.sfhaNearby
+        ? `SFHA detected within ~${(args.fema.sfhaSearchRadiusKm ?? 1.5).toFixed(1)} km`
+        : `No SFHA detected within ~${(args.fema.sfhaSearchRadiusKm ?? 1.5).toFixed(1)} km`,
+    severity: args.fema?.sfhaNearby == null ? "unknown" : args.fema.sfhaNearby ? "medium" : "low",
+    explanation: "Nearby FEMA Special Flood Hazard Areas indicate potential floodplain-adjacent constraints even outside parcel SFHA."
+  });
+
+  const hasFemaZone = Boolean(args.fema?.floodZone);
+  signals.push({
     id: "base-flood-elevation",
     label: "Base Flood Elevation",
-    value: args.fema
-      ? args.fema.staticBfe != null
+    value: hasFemaZone
+      ? args.fema?.staticBfe != null
         ? `${args.fema.staticBfe} ft`
         : "Not applicable"
       : "Not available",
-    severity: args.fema
-      ? args.fema.staticBfe != null
+    severity: hasFemaZone
+      ? args.fema?.staticBfe != null
         ? "medium"
         : "low"
       : "unknown",
-    explanation: args.fema
-      ? args.fema.staticBfe != null
+    explanation: hasFemaZone
+      ? args.fema?.staticBfe != null
         ? "BFE informs minimum finished floor and floodproofing elevation."
         : "No BFE required for this location (outside mapped flood areas)."
       : "Base flood elevation data unavailable."
@@ -191,6 +222,21 @@ export function buildSignals(args: {
       : "Wildfire risk data not available for this location."
   });
 
+  const tornadoValue =
+    args.severe == null
+      ? "Not available"
+      : `Day 1 ${Number(args.severe.day1TornadoProbPct ?? 0)}%, Day 2 ${Number(args.severe.day2TornadoProbPct ?? 0)}%`;
+  signals.push({
+    id: "tornado-outlook",
+    label: "NOAA SPC Tornado Outlook",
+    value: tornadoValue,
+    severity: severityFromTornadoOutlook(args.severe),
+    explanation:
+      args.severe == null
+        ? "NOAA SPC tornado outlook data unavailable."
+        : "Direct NOAA SPC Day 1/2 probabilistic tornado outlook for the site point."
+  });
+
   return signals;
 }
 
@@ -198,10 +244,11 @@ export function buildImplications(signals: Signal[]): Implication[] {
   const implications: Implication[] = [];
 
   const flood = signals.find((s) => s.id === "flood-zone");
-  if (flood?.severity === "high") {
+  const floodNearby = signals.find((s) => s.id === "floodplain-proximity");
+  if (flood?.severity === "high" || floodNearby?.severity === "medium" || floodNearby?.severity === "high") {
     implications.push({
       title: "Flood Mitigation Budget",
-      detail: "Allocate contingency for elevation, floodproofing, and potential insurance premiums."
+      detail: "Allocate contingency for elevation/floodproofing review and assess floodplain-adjacent permitting constraints."
     });
   }
 
@@ -242,6 +289,14 @@ export function buildImplications(signals: Signal[]): Implication[] {
     implications.push({
       title: "Fire Defensibility & Insurance",
       detail: "Consider defensible space, fire-resistant materials, and specialized insurance requirements."
+    });
+  }
+
+  const tornado = signals.find((s) => s.id === "tornado-outlook");
+  if (tornado?.severity === "high" || tornado?.severity === "medium") {
+    implications.push({
+      title: "Severe Storm Design/Logistics",
+      detail: "Validate temporary works, roof/wall detailing assumptions, and weather-day allowances against SPC tornado outlook risk."
     });
   }
 

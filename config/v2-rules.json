@@ -12,6 +12,17 @@
       "rationale": "Flood hazard typically increases elevation, floodproofing, and insurance requirements."
     },
     {
+      "signalId": "floodplain-proximity",
+      "costCategory": "Division 02 - Site/Civil Risk",
+      "impactType": "schedule",
+      "deltas": {
+        "high": { "pct": [2, 6], "days": [6, 20] },
+        "medium": { "pct": [0.8, 2], "days": [2, 8] },
+        "low": { "pct": [0, 0.4], "days": [0, 2] }
+      },
+      "rationale": "Proximity to mapped SFHA often adds drainage/floodplain due diligence and review-path friction."
+    },
+    {
       "signalId": "sdc",
       "costCategory": "Division 03/05 - Structural Systems",
       "impactType": "capex",
@@ -65,6 +76,17 @@
         "low": { "pct": [0, 0.3], "days": [0, 1] }
       },
       "rationale": "Fire-prone areas can add premium for materials, defensible space, and insurance."
+    },
+    {
+      "signalId": "tornado-outlook",
+      "costCategory": "Temporary Works + Weather Resilience",
+      "impactType": "schedule",
+      "deltas": {
+        "high": { "pct": [0.8, 2.5], "days": [3, 12] },
+        "medium": { "pct": [0.3, 0.8], "days": [1, 4] },
+        "low": { "pct": [0, 0.2], "days": [0, 1] }
+      },
+      "rationale": "Elevated SPC tornado outlook can require stronger temporary-risk controls and weather contingencies."
     },
     {
       "signalId": "wind-load-proxy",
@@ -140,6 +162,12 @@
       "duePhase": "Design Development",
       "leadTimeDays": 10
     },
+    "floodplain-proximity": {
+      "title": "Review nearby SFHA boundaries and floodplain permit triggers",
+      "owner": "Civil Engineer",
+      "duePhase": "Bid",
+      "leadTimeDays": 8
+    },
     "sdc": {
       "title": "Run structural scheme check for seismic detailing",
       "owner": "Structural Engineer",
@@ -169,6 +197,12 @@
       "owner": "Project Manager",
       "duePhase": "Permit",
       "leadTimeDays": 11
+    },
+    "tornado-outlook": {
+      "title": "Set weather-day assumptions and temporary works wind protocol",
+      "owner": "Project Manager",
+      "duePhase": "Bid",
+      "leadTimeDays": 5
     },
     "wind-load-proxy": {
       "title": "Validate wind criteria against structural basis of design",

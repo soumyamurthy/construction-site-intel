@@ -6,7 +6,8 @@ import {
   fetchUSGSDesignMap,
   geocodeAddress,
   fetchFireHazard,
-  fetchClimateNormals
+  fetchClimateNormals,
+  fetchSPCTornadoOutlook
 } from "../../../lib/sources";
 import { buildImplications, buildSignals } from "../../../lib/signals";
 import { AnalysisResult, Fact } from "../../../lib/types";
@@ -22,6 +23,15 @@ import {
 } from "../../../lib/v2";
 
 export const dynamic = "force-dynamic";
+
+const INFERRED_PROXY_SIGNAL_IDS = new Set([
+  "wind-load-proxy",
+  "snow-load-proxy",
+  "wetland-constraint-proxy",
+  "utility-capacity-proxy",
+  "permitting-complexity-proxy",
+  "logistics-access-proxy"
+]);
 
 function addFact(facts: Fact[], fact: Fact) {
   if (fact.value == null || fact.value === "") return;
@@ -61,7 +71,7 @@ export async function POST(req: NextRequest) {
       value: geocode.location.lon
     });
 
-    const [usgs, fema, soils, elevation, fire, climate] = await Promise.all([
+    const [usgs, fema, soils, elevation, fire, climate, severe] = await Promise.all([
       fetchUSGSDesignMap(geocode.location).catch((err) => {
         warnings.push(`USGS design maps unavailable: ${err.message}`);
         return undefined;
@@ -85,6 +95,10 @@ export async function POST(req: NextRequest) {
       fetchClimateNormals(geocode.location).catch((err) => {
         warnings.push(`Climate normals unavailable: ${err.message}`);
         return undefined;
+      }),
+      fetchSPCTornadoOutlook(geocode.location).catch((err) => {
+        warnings.push(`NOAA SPC tornado outlook unavailable: ${err.message}`);
+        return undefined;
       })
     ]);
 
@@ -107,9 +121,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (fema) {
-      addFact(facts, { source: "FEMA NFHL", label: "Flood Zone", value: fema.floodZone ?? null });
-      addFact(facts, { source: "FEMA NFHL", label: "Zone Subtype", value: fema.zoneSubtype ?? null });
-      addFact(facts, { source: "FEMA NFHL", label: "Base Flood Elevation", value: fema.staticBfe ?? null, unit: "ft" });
+      const femaSource = fema.source ?? "FEMA NFHL";
+      addFact(facts, { source: femaSource, label: "Flood Zone", value: fema.floodZone ?? null });
+      addFact(facts, { source: femaSource, label: "Zone Subtype", value: fema.zoneSubtype ?? null });
+      addFact(facts, { source: femaSource, label: "Base Flood Elevation", value: fema.staticBfe ?? null, unit: "ft" });
+      addFact(facts, {
+        source: femaSource,
+        label: "SFHA Nearby",
+        value: fema.sfhaNearby == null ? null : fema.sfhaNearby ? "Yes" : "No"
+      });
     }
 
     if (soils) {
@@ -164,6 +184,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (severe) {
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 1 Tornado Outlook",
+        value: severe.day1TornadoProbPct ?? null,
+        unit: "%"
+      });
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 2 Tornado Outlook",
+        value: severe.day2TornadoProbPct ?? null,
+        unit: "%"
+      });
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 1 Significant Tornado Area",
+        value: severe.day1Significant == null ? null : severe.day1Significant ? "Yes" : "No"
+      });
+      addFact(facts, {
+        source: severe.source ?? "NOAA SPC Convective Outlooks",
+        label: "Day 2 Significant Tornado Area",
+        value: severe.day2Significant == null ? null : severe.day2Significant ? "Yes" : "No"
+      });
+    }
+
     if (climate) {
       addFact(facts, {
         source: climate.source ?? "Open-Meteo archive",
@@ -184,7 +229,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const baseSignals = buildSignals({ fema, usgs, soils, elevation, fire });
+    const baseSignals = buildSignals({ fema, usgs, soils, elevation, fire, severe });
     const advancedSignals = buildAdvancedSignals({
       point: geocode.location,
       fema,
@@ -192,7 +237,10 @@ export async function POST(req: NextRequest) {
       elevation,
       climate
     });
-    const signals = [...baseSignals, ...advancedSignals];
+    // Keep signals tab strictly source-verifiable by excluding inferred proxy heuristics.
+    const signals = [...baseSignals, ...advancedSignals].filter(
+      (signal) => !INFERRED_PROXY_SIGNAL_IDS.has(signal.id)
+    );
     const implications = buildImplications(signals);
 
     const baseResult: AnalysisResult = {

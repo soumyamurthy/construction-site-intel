@@ -396,12 +396,12 @@ export default function V3Page() {
                   </thead>
                   <tbody>
                     {data.costDrivers.map((d) => (
-                      <tr key={d.id}>
-                        <td>{d.label}</td>
-                        <td>{d.severity}</td>
+                      <tr key={d.id} className={`severity-row severity-${d.severity}`}>
+                        <td className="driver-cell">{d.label}</td>
+                        <td><span className={`severity-badge severity-${d.severity}`}>{d.severity}</span></td>
                         <td>{d.costCategory}</td>
-                        <td>{d.estimatedCostDeltaPct.min}% - {d.estimatedCostDeltaPct.max}%</td>
-                        <td>{d.estimatedScheduleDeltaDays.min} - {d.estimatedScheduleDeltaDays.max} days</td>
+                        <td className="impact-cell">{d.estimatedCostDeltaPct.min}% - {d.estimatedCostDeltaPct.max}%</td>
+                        <td className="impact-cell">{d.estimatedScheduleDeltaDays.min} - {d.estimatedScheduleDeltaDays.max} days</td>
                       </tr>
                     ))}
                   </tbody>
@@ -415,12 +415,12 @@ export default function V3Page() {
               <div className="section-title">PM Action Register</div>
               <div className="implications-grid">
                 {data.actions.map((action) => (
-                  <div key={action.id} className="implication-card">
+                  <div key={action.id} className={`implication-card priority-${action.priority}`}>
                     <h4>{action.title}</h4>
                     <p>Owner: {action.owner}</p>
                     <p>Due: {action.duePhase}</p>
                     <p>Lead Time: {action.leadTimeDays} days</p>
-                    <p>Priority: {action.priority}</p>
+                    <p className={`priority-line priority-${action.priority}`}>Priority: {action.priority}</p>
                   </div>
                 ))}
               </div>
@@ -433,7 +433,8 @@ export default function V3Page() {
               <h3>Top Cost Drivers</h3>
               <ul className="v2-list">
                 {topDrivers.map((driver) => (
-                  <li key={driver.id}>
+                  <li key={driver.id} className={`severity-line severity-${driver.severity}`}>
+                    <span className={`severity-badge severity-${driver.severity}`}>{driver.severity}</span>{" "}
                     {driver.label}: +{driver.estimatedCostDeltaPct.min}% to +{driver.estimatedCostDeltaPct.max}% ({driver.rationale})
                   </li>
                 ))}
@@ -448,9 +449,9 @@ export default function V3Page() {
 
               <h3>System Warnings</h3>
               <ul className="v2-list">
-                {data.warnings.length === 0 && <li>No source warnings detected.</li>}
+                {data.warnings.length === 0 && <li className="severity-line severity-low">No source warnings detected.</li>}
                 {data.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
+                  <li key={warning} className="severity-line severity-high">{warning}</li>
                 ))}
               </ul>
 

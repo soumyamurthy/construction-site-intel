@@ -441,6 +441,26 @@ button:hover {
   border-left: 3px solid var(--severity-low);
 }
 
+.signal-item.severity-high .signal-name,
+.signal-item.severity-high .signal-value {
+  color: var(--severity-high);
+}
+
+.signal-item.severity-medium .signal-name,
+.signal-item.severity-medium .signal-value {
+  color: var(--severity-medium);
+}
+
+.signal-item.severity-low .signal-name,
+.signal-item.severity-low .signal-value {
+  color: var(--severity-low);
+}
+
+.signal-item.severity-unknown .signal-name,
+.signal-item.severity-unknown .signal-value {
+  color: var(--muted);
+}
+
 /* Signal Header */
 .signal-header {
   display: flex;
@@ -779,12 +799,67 @@ button:hover {
   font-weight: 600;
 }
 
+.v2-table .severity-row .driver-cell {
+  font-weight: 600;
+}
+
+.v2-table .severity-row.severity-high .driver-cell,
+.v2-table .severity-row.severity-high .impact-cell {
+  color: var(--severity-high);
+}
+
+.v2-table .severity-row.severity-medium .driver-cell,
+.v2-table .severity-row.severity-medium .impact-cell {
+  color: var(--severity-medium);
+}
+
+.v2-table .severity-row.severity-low .driver-cell,
+.v2-table .severity-row.severity-low .impact-cell {
+  color: var(--severity-low);
+}
+
+.v2-table .severity-row.severity-unknown .driver-cell,
+.v2-table .severity-row.severity-unknown .impact-cell {
+  color: var(--muted);
+}
+
 .v2-list {
   margin: 8px 0 18px;
   padding-left: 18px;
   color: var(--muted);
   font-size: 0.96rem;
   line-height: 1.5;
+}
+
+.severity-line.severity-high {
+  color: var(--severity-high);
+}
+
+.severity-line.severity-medium {
+  color: var(--severity-medium);
+}
+
+.severity-line.severity-low {
+  color: var(--severity-low);
+}
+
+.severity-line.severity-unknown {
+  color: var(--muted);
+}
+
+.implication-card.priority-high h4,
+.priority-line.priority-high {
+  color: var(--severity-high);
+}
+
+.implication-card.priority-medium h4,
+.priority-line.priority-medium {
+  color: var(--severity-medium);
+}
+
+.implication-card.priority-low h4,
+.priority-line.priority-low {
+  color: var(--severity-low);
 }
 
 .v2-body {
