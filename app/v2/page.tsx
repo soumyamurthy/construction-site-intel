@@ -191,22 +191,25 @@ export default function V2Page() {
     <main className="v2-page">
       <section className="hero v2-hero">
         <div className="v2-hero-copy">
-          <span className="tag">Construction Site Intelligence</span>
-          <h1>Pre-bid cost drivers, contingency guidance, and action ownership.</h1>
+          <span className="tag">Estimator + PM Intelligence</span>
+          <h1>Construction Site Intelligence</h1>
+          <p>Pre-bid cost drivers, contingency guidance, and action ownership.</p>
           <p>Includes AI-assisted deductions layered on source data to accelerate early-stage estimating decisions.</p>
         </div>
         <div className="card fade-in v2-hero-card">
           <form className="form v2-hero-form" onSubmit={handleSubmit}>
             <label className="address-label v2-address-label">Site Address</label>
-            <input
-              className="address-input v2-hero-input"
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              placeholder="123 Main St, City, ST 12345"
-            />
-            <button type="submit" className="submit-button v2-hero-button" disabled={loading}>
-              {loading ? "Analyzing..." : "Run V2 Analysis"}
-            </button>
+            <div className="v2-input-row">
+              <input
+                className="address-input v2-hero-input"
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                placeholder="123 Main St, City, ST 12345"
+              />
+              <button type="submit" className="submit-button v2-hero-button" disabled={loading}>
+                {loading ? "Analyzing..." : "Run V2 Analysis"}
+              </button>
+            </div>
             {data && (
               <div className="v2-export-row">
                 <button

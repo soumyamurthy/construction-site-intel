@@ -322,7 +322,7 @@ button:hover {
 }
 
 .v2-hero-card {
-  padding: 24px;
+  padding: 22px;
   border-radius: 22px;
   background:
     radial-gradient(340px 220px at 0% -10%, rgba(111, 214, 164, 0.14), transparent 65%),
@@ -330,22 +330,35 @@ button:hover {
 }
 
 .v2-hero-form {
-  gap: 14px;
+  gap: 10px;
 }
 
 .v2-address-label {
-  font-size: 1rem;
-  letter-spacing: 0.01em;
+  font-size: 0.82rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.v2-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
 }
 
 .v2-hero-input {
-  min-height: 60px;
-  font-size: 1.04rem !important;
+  min-height: 54px;
+  font-size: 1rem !important;
+  border-radius: 12px !important;
 }
 
 .v2-hero-button {
-  min-height: 56px;
-  font-size: 1.04rem !important;
+  min-height: 54px;
+  font-size: 0.96rem !important;
+  padding: 0 18px !important;
+  white-space: nowrap;
+  border-radius: 12px !important;
 }
 
 .v2-signals-scroll {
@@ -909,5 +922,13 @@ button:hover {
 
   .v2-hero-card {
     padding: 22px;
+  }
+
+  .v2-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .v2-hero-button {
+    width: 100%;
   }
 }
