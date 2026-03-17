@@ -88,6 +88,17 @@ export async function POST(req: NextRequest) {
       })
     ]);
 
+    if (
+      soils &&
+      !soils.compname &&
+      !soils.hydrologicGroup &&
+      !soils.drainageClass &&
+      soils.clayPercent == null &&
+      soils.restrictiveDepthCm == null
+    ) {
+      warnings.push("USDA soils returned no mapped attributes at the geocoded location.");
+    }
+
     if (usgs) {
       addFact(facts, { source: "USGS Design Maps", label: "SDS", value: usgs.sds ?? null, unit: "g" });
       addFact(facts, { source: "USGS Design Maps", label: "SD1", value: usgs.sd1 ?? null, unit: "g" });

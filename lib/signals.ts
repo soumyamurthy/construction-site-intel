@@ -9,7 +9,7 @@ function severityFromFloodZone(zone?: string): Signal["severity"] {
 }
 
 function severityFromFireRisk(risk?: string): Signal["severity"] {
-  if (!risk) return "low";
+  if (!risk) return "unknown";
   if (risk === "very high") return "high";
   if (risk === "high") return "high";
   if (risk === "medium") return "medium";
@@ -17,21 +17,21 @@ function severityFromFireRisk(risk?: string): Signal["severity"] {
 }
 
 function severityFromSdc(sdc?: string): Signal["severity"] {
-  if (!sdc) return "low";
+  if (!sdc) return "unknown";
   if (["D", "E", "F"].includes(sdc)) return "high";
   if (sdc === "C") return "medium";
   return "low";
 }
 
 function severityFromHydroGroup(group?: string): Signal["severity"] {
-  if (!group) return "low";
+  if (!group) return "unknown";
   if (group.includes("D")) return "high";
   if (group.includes("C")) return "medium";
   return "low";
 }
 
 function severityFromDrainageClass(value?: string): Signal["severity"] {
-  if (!value) return "low";
+  if (!value) return "unknown";
   const v = value.toLowerCase();
   if (v.includes("poor") || v.includes("very poor")) return "high";
   if (v.includes("somewhat") || v.includes("moderate")) return "medium";
@@ -39,21 +39,21 @@ function severityFromDrainageClass(value?: string): Signal["severity"] {
 }
 
 function severityFromClay(clay?: number | null): Signal["severity"] {
-  if (clay == null) return "low";
+  if (clay == null) return "unknown";
   if (clay >= 40) return "high";
   if (clay >= 25) return "medium";
   return "low";
 }
 
 function severityFromRestrictiveDepth(depth?: number | null): Signal["severity"] {
-  if (depth == null) return "low";
+  if (depth == null) return "unknown";
   if (depth <= 100) return "high";
   if (depth <= 150) return "medium";
   return "low";
 }
 
 function severityFromSlope(slope?: number | null): Signal["severity"] {
-  if (slope == null) return "low";
+  if (slope == null) return "unknown";
   if (slope >= 10) return "high";
   if (slope >= 5) return "medium";
   return "low";
@@ -84,11 +84,21 @@ export function buildSignals(args: {
   signals.push({
     id: "base-flood-elevation",
     label: "Base Flood Elevation",
-    value: args.fema?.staticBfe != null ? `${args.fema?.staticBfe} ft` : "Not applicable",
-    severity: args.fema?.staticBfe != null ? "medium" : "low",
-    explanation: args.fema?.staticBfe != null
-      ? "BFE informs minimum finished floor and floodproofing elevation."
-      : "No BFE required for this location (outside mapped flood areas)."
+    value: args.fema
+      ? args.fema.staticBfe != null
+        ? `${args.fema.staticBfe} ft`
+        : "Not applicable"
+      : "Not available",
+    severity: args.fema
+      ? args.fema.staticBfe != null
+        ? "medium"
+        : "low"
+      : "unknown",
+    explanation: args.fema
+      ? args.fema.staticBfe != null
+        ? "BFE informs minimum finished floor and floodproofing elevation."
+        : "No BFE required for this location (outside mapped flood areas)."
+      : "Base flood elevation data unavailable."
   });
 
   signals.push({
@@ -105,7 +115,7 @@ export function buildSignals(args: {
     id: "sds",
     label: "Short-Period Spectral Accel (SDS)",
     value: args.usgs?.sds != null ? formatNumber(args.usgs.sds, 3) : "Not available",
-    severity: args.usgs?.sds != null ? (args.usgs.sds >= 1.0 ? "high" : "low") : "low",
+    severity: args.usgs?.sds != null ? (args.usgs.sds >= 1.0 ? "high" : "low") : "unknown",
     explanation: args.usgs?.sds != null
       ? "Higher SDS increases seismic base shear and foundation demand."
       : "Seismic acceleration parameters not determined."
@@ -115,7 +125,7 @@ export function buildSignals(args: {
     id: "sd1",
     label: "1-Second Spectral Accel (SD1)",
     value: args.usgs?.sd1 != null ? formatNumber(args.usgs.sd1, 3) : "Not available",
-    severity: args.usgs?.sd1 != null ? (args.usgs.sd1 >= 0.6 ? "high" : "low") : "low",
+    severity: args.usgs?.sd1 != null ? (args.usgs.sd1 >= 0.6 ? "high" : "low") : "unknown",
     explanation: args.usgs?.sd1 != null
       ? "Higher SD1 drives drift-sensitive system sizing and bracing."
       : "Seismic acceleration parameters not determined."

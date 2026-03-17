@@ -94,15 +94,15 @@ function metroClass(point: { lat: number; lon: number }): "major-metro" | "metro
   return "non-metro";
 }
 
-function severityFromWind(mph?: number | null): SeverityKey {
-  if (mph == null) return "low";
+function severityFromWind(mph?: number | null): Signal["severity"] {
+  if (mph == null) return "unknown";
   if (mph >= 120) return "high";
   if (mph >= 100) return "medium";
   return "low";
 }
 
-function severityFromSnow(cm?: number | null): SeverityKey {
-  if (cm == null) return "low";
+function severityFromSnow(cm?: number | null): Signal["severity"] {
+  if (cm == null) return "unknown";
   if (cm >= 100) return "high";
   if (cm >= 40) return "medium";
   return "low";
@@ -148,11 +148,18 @@ export function buildAdvancedSignals(args: {
   if (hydro.includes("D")) wetlandScore += 1;
   if (drainage.includes("poor")) wetlandScore += 1;
 
-  const wetlandSeverity: SeverityKey = wetlandScore >= 3 ? "high" : wetlandScore >= 2 ? "medium" : "low";
+  const hasWetlandInputs = Boolean(floodZone || hydro || drainage);
+  const wetlandSeverity: Signal["severity"] = !hasWetlandInputs
+    ? "unknown"
+    : wetlandScore >= 3
+      ? "high"
+      : wetlandScore >= 2
+        ? "medium"
+        : "low";
   signals.push({
     id: "wetland-constraint-proxy",
     label: "Wetland/Environmental Constraint Proxy",
-    value: wetlandScore >= 3 ? "Elevated" : wetlandScore >= 2 ? "Moderate" : "Limited",
+    value: !hasWetlandInputs ? "Not available" : wetlandScore >= 3 ? "Elevated" : wetlandScore >= 2 ? "Moderate" : "Limited",
     severity: wetlandSeverity,
     explanation: "Proxy derived from flood and soil wetness indicators to flag potential environmental permitting friction."
   });
