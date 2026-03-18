@@ -77,7 +77,7 @@ function groupAllSignals(signals: Signal[]): Array<SignalGroup & { signals: Sign
       key: "other",
       title: "Additional Signals",
       icon: "📌",
-      subtitle: "Signals not yet mapped to a dedicated V2 category",
+      subtitle: "",
       ids: uncategorizedSignals.map((signal) => signal.id),
       signals: uncategorizedSignals
     });
